@@ -28,6 +28,7 @@ object Common {
     val COLOR_WAVE_INT = Constants.COLOR_WAVE_INT
     const val ENHANCE_CMD = Constants.ENHANCE_CMD
     val MUSLIM_COLORS = Constants.MUSLIM_COLORS
+    val FONT_ENGLISH_APP = Constants.FONT_ENGLISH_APP
 
 
     // ──────────────────────────────────────────────
