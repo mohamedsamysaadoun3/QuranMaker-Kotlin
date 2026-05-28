@@ -1,0 +1,34 @@
+package hazem.nurmontage.videoquran.constant
+
+/**
+ * Enum representing the canvas aspect ratio / resize mode for the video project.
+ *
+ * Each type carries a float value representing the width-to-height ratio
+ * used by the rendering engine to determine the output dimensions.
+ */
+enum class ResizeType(val value: Float) {
+    IMAGE(0.0f),
+    FREE(-1.0f),
+    OVAL(-1.0f),
+    SQUARE(1.0f),
+    VERTICAL(0.5622189f),
+    SOCIAL_STORY(0.5625f),
+    SOCIAL_PORTRAIT(0.8f),
+    PLAYSTORE_PORTRAIT(0.8f),
+    PINTEREST(0.6669691f),
+    HORIZONTAL(0.5625f),
+    YOUTUBE_BANNER(0.5625f),
+    TWITTER_POST(0.5625f),
+    YOUTUBE_THUMBNAIL(0.5625f),
+    COVER_PAGE_FACEBOOK(0.5625f),
+    FACEBOOK_POST(0.525f),
+    SOCIAL_LANDSCAPE(0.5240741f),
+    LINKEDIN(0.5233333f),
+    DRIBBLE(0.75f),
+    PLAYSTORE_HORIZANTAL(0.8f),
+    BANNER_PLAY_STORE(0.48828125f),
+    COVER_FACEBOOK(0.3804878f),
+    TWITTER_HEADER(0.33333334f),
+    TWITCH_BANNER(0.25f),
+    CUSTOM_SIZE(0.0f)
+}

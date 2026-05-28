@@ -175,6 +175,10 @@ dependencies {
     // مكتشف: FileUtils import في ProgressViewActivity
     implementation("commons-io:commons-io:2.16.1")
 
+    // ─── Gson ───
+    // Required by LocalPersistence.kt for Template JSON serialization
+    implementation("com.google.code.gson:gson:2.10.1")
+
     // ─── PairIP Protection ─── REMOVED (not needed for clean build)
 
     // ─── Kotlin Standard Library ───
