@@ -165,3 +165,8 @@
     <string name="choice_screen_ipod">iPod screen selection</string>
     <string name="to">To</string>
 </resources>
+    <string name="language_changed">Language changed successfully</string>
+    <string name="select_language">Select Language</string>
+    <string name="choose_your_preferred_language">Choose your preferred language</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>

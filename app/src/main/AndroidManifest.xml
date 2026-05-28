@@ -215,27 +215,8 @@
             android:screenOrientation="portrait"/>
 
         <!-- ═══════════════════════════════════════════════════ -->
-        <!-- Billing / Pro / Ads Activities                      -->
+        <!-- Billing / Pro / Ads — REMOVED (free, clean app)    -->
         <!-- ═══════════════════════════════════════════════════ -->
-        <activity
-            android:name="hazem.nurmontage.videoquran.SupportBillingActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"/>
-
-        <activity
-            android:name="hazem.nurmontage.videoquran.ProVersionActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"/>
-
-        <activity
-            android:name="hazem.nurmontage.videoquran.ProVersionActivityDone"
-            android:exported="false"
-            android:screenOrientation="portrait"/>
-
-        <activity
-            android:name="hazem.nurmontage.videoquran.AdsTuffahActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"/>
 
         <!-- ═══════════════════════════════════════════════════ -->
         <!-- FileProvider                                        -->

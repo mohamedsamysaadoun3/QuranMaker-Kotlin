@@ -153,20 +153,9 @@ dependencies {
     implementation("com.google.android.gms:play-services-base:18.5.0")
     implementation("com.google.android.gms:play-services-tasks:18.2.0")
 
-    // ─── Google Play Billing ───
-    // مكتشف: com.google.android.gms.internal.play_billing في jadx_output
-    // مكتشف: SupportBillingActivity, BillingPreferences, ProVersionActivity
-    implementation("com.google.android.gms:play-services-billing:7.1.1")
-
-    // ─── Google AdMob ───
-    // مكتشف: AdsTuffahActivity في AndroidManifest
-    implementation("com.google.android.gms:play-services-ads:23.6.0")
-
-    // ─── Firebase ───
-    // مكتشف: firebase-encoders 17.0.0, firebase-encoders-json 18.0.0
-    // مكتشف: transport-runtime 3.1.8, transport-backend-cct 3.1.8
-    implementation("com.google.firebase:firebase-analytics:22.1.2")
-    implementation("com.google.firebase:firebase-analytics-ktx:22.1.2")
+    // ─── Google Play Billing ─── REMOVED (free, clean app)
+    // ─── Google AdMob ─── REMOVED (no ads)
+    // ─── Firebase ─── REMOVED (no analytics tracking)
 
     // ═══════════════════════════════════════════════════════════
     // مؤثرات بصرية - Visual Effects
@@ -186,9 +175,7 @@ dependencies {
     // مكتشف: FileUtils import في ProgressViewActivity
     implementation("commons-io:commons-io:2.16.1")
 
-    // ─── PairIP Protection ───
-    // مكتشف: com.pairip في jadx_output (9 ملف)
-    implementation("com.pairip:pairip-android:3.3.5")
+    // ─── PairIP Protection ─── REMOVED (not needed for clean build)
 
     // ─── Kotlin Standard Library ───
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.25")
