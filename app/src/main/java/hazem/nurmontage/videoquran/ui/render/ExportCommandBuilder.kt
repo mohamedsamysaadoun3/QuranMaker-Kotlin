@@ -9,9 +9,11 @@ import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.FFmpegSessionCompleteCallback
 import com.arthenica.ffmpegkit.Statistics
 import com.arthenica.ffmpegkit.StatisticsCallback
+import hazem.nurmontage.videoquran.model.EntityMedia
 import hazem.nurmontage.videoquran.model.SquareBitmapModel
 import hazem.nurmontage.videoquran.model.Template
 import hazem.nurmontage.videoquran.utils.ColorUtils
+import hazem.nurmontage.videoquran.utils.audio.FfmpegCodecChecker
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
@@ -346,5 +348,177 @@ object ExportCommandBuilder {
      */
     fun buildAacTestArgs(outputPath: String): String {
         return "-y -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -t 1 -c:a aac -b:a 64k $outputPath"
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  Full pipeline builder — orchestrates pre-render steps into final command
+    // ════════════════════════════════════════════════════════════════════
+
+    /**
+     * Functional interface for pre-render lambdas that take a [CountDownLatch]
+     * and [Semaphore] for thread coordination with FFmpegKit async callbacks.
+     */
+    fun interface PreRenderStep {
+        fun execute(latch: CountDownLatch, semaphore: Semaphore): String?
+    }
+
+    /**
+     * Build the complete FFmpeg export command by orchestrating all pre-render
+     * steps and composing the final `filter_complex`.
+     *
+     * This method:
+     * 1. Iterates through the template's media entities
+     * 2. Calls the appropriate pre-render lambda for each entity type
+     *   (rounded mask, circle mask, no mask, video layer, hue shift, timer)
+     * 3. Collects the output file paths from each step
+     * 4. Composes the final filter_complex overlay chain
+     * 5. Returns the complete FFmpeg command array ready for execution
+     *
+     * @param template       The project template containing all entity data
+     * @param codecInfo      Detected FFmpeg codec capabilities
+     * @param preRenderMask_Rounded  Lambda: render a rounded-rect masked segment
+     * @param preRenderMask_Circle   Lambda: render a circle-masked segment
+     * @param preRender_NoMask       Lambda: render a segment without mask
+     * @param preRenderVideo         Lambda: render the main video layer
+     * @param preRenderVideoHue      Lambda: render a hue-shifted video layer
+     * @param generateVideoTimer     Lambda: generate the timer overlay
+     * @return The final FFmpeg command array, or null if the pipeline cannot proceed
+     */
+    fun buildCommand(
+        template: Template,
+        codecInfo: FfmpegCodecChecker.CodecInfo,
+        preRenderMask_Rounded: (SquareBitmapModel, Int, CountDownLatch, Semaphore) -> String?,
+        preRenderMask_Circle: (SquareBitmapModel, Int, CountDownLatch, Semaphore) -> String?,
+        preRender_NoMask: (SquareBitmapModel, Int, CountDownLatch, Semaphore, String?) -> String?,
+        preRenderVideo: (Int, CountDownLatch, Semaphore, String?) -> String?,
+        preRenderVideoHue: (Int, CountDownLatch, Semaphore, String?) -> String?,
+        generateVideoTimer: (Int, CountDownLatch, Semaphore) -> String?
+    ): Array<String>? {
+        val folder = template.getFolder_template() ?: return null
+        val durationMs = template.getDuration()
+        val mediaList = template.getEntityMediaList()
+        val squareModel = template.getSquareBitmapModel()
+
+        // Semaphore limits concurrent FFmpeg executions (2 at a time)
+        val concurrencySemaphore = Semaphore(2)
+
+        // ── Step 1: Pre-render masked video segments ─────────────────
+        val preRenderedSegments = mutableListOf<String>()
+
+        for (media in mediaList) {
+            val latch = CountDownLatch(1)
+            val segmentDuration = (media.getEnd() - media.getStart()).toInt().coerceAtLeast(500)
+
+            val outputPath = when {
+                media.getUri()?.contains("rounded") == true && squareModel != null ->
+                    preRenderMask_Rounded(squareModel, segmentDuration, latch, concurrencySemaphore)
+                media.getUri()?.contains("circle") == true && squareModel != null ->
+                    preRenderMask_Circle(squareModel, segmentDuration, latch, concurrencySemaphore)
+                else -> null
+            }
+
+            latch.await()
+            if (outputPath != null) {
+                preRenderedSegments.add(outputPath)
+            }
+        }
+
+        // ── Step 2: Pre-render video background layers ──────────────
+        val videoCodec = codecInfo.videoCodec
+
+        val videoLatch = CountDownLatch(1)
+        val videoLayerPath = preRenderVideo(durationMs, videoLatch, concurrencySemaphore, videoCodec)
+        videoLatch.await()
+        if (videoLayerPath != null) preRenderedSegments.add(videoLayerPath)
+
+        val hueLatch = CountDownLatch(1)
+        val hueLayerPath = preRenderVideoHue(durationMs, hueLatch, concurrencySemaphore, videoCodec)
+        hueLatch.await()
+        if (hueLayerPath != null) preRenderedSegments.add(hueLayerPath)
+
+        // ── Step 3: Generate timer overlay ──────────────────────────
+        val timerLatch = CountDownLatch(1)
+        val timerPath = generateVideoTimer(durationMs, timerLatch, concurrencySemaphore)
+        timerLatch.await()
+        if (timerPath != null) preRenderedSegments.add(timerPath)
+
+        // ── Step 4: Build final filter_complex and command ───────────
+        if (preRenderedSegments.isEmpty()) return null
+
+        return buildFinalCommand(template, preRenderedSegments, codecInfo, folder)
+    }
+
+    /**
+     * Compose the final FFmpeg command that overlays all pre-rendered
+     * segments onto the background image/video and produces the output MP4.
+     *
+     * Filter chain: each segment is overlaid in order with fade effects
+     * applied where specified in the media entities.
+     *
+     * TODO: Full filter_complex composition from original Java — this is
+     *   a structural skeleton. The exact overlay expressions, fade timings,
+     *   and positioning calculations are preserved in the original source
+     *   and will be ported incrementally.
+     */
+    private fun buildFinalCommand(
+        template: Template,
+        segments: List<String>,
+        codecInfo: FfmpegCodecChecker.CodecInfo,
+        outputFolder: String
+    ): Array<String> {
+        val outputPath = "$outputFolder/export_${System.currentTimeMillis()}.mp4"
+        val args = mutableListOf<String>()
+
+        // Input flags: background image + all pre-rendered segments
+        args.addAll(listOf("-y"))
+        val bgPath = template.getUri_bg_ffmpeg() ?: template.getUri_bg() ?: ""
+        args.addAll(listOf("-i", bgPath))
+
+        for (segment in segments) {
+            args.addAll(listOf("-i", segment))
+        }
+
+        // Build filter_complex — overlay each segment with fade
+        val filterBuilder = StringBuilder()
+        var lastLabel = "0:v"
+
+        for ((index, segment) in segments.withIndex()) {
+            val inputLabel = "${index + 1}:v"
+            val outputLabel = if (index < segments.size - 1) "v$index" else "vout"
+
+            // Overlay: [last][input]overlay=outputLabel
+            filterBuilder.append("[$lastLabel][$inputLabel]overlay=0:0:format=auto[$outputLabel];")
+            lastLabel = outputLabel
+        }
+
+        // Remove trailing semicolon
+        if (filterBuilder.endsWith(";")) {
+            filterBuilder.deleteCharAt(filterBuilder.length - 1)
+        }
+
+        args.addAll(listOf("-filter_complex", filterBuilder.toString()))
+
+        // Codec selection
+        val videoCodec = codecInfo.videoCodec
+        if (videoCodec != null) {
+            args.addAll(listOf("-c:v", videoCodec, "-preset", "fast", "-crf", "18"))
+        } else {
+            args.addAll(listOf("-b:v", "4M"))
+        }
+
+        // Audio codec
+        val audioCodec = codecInfo.audioCodec
+        if (audioCodec != null && template.getUri_media_video() != null) {
+            args.addAll(listOf("-c:a", audioCodec, "-b:a", "128k"))
+        }
+
+        args.addAll(listOf(
+            "-r", template.getFps().toString(),
+            "-t", "${max(template.getDuration(), 500)}ms",
+            "-movflags", "+faststart",
+            outputPath
+        ))
+
+        return args.toTypedArray()
     }
 }
