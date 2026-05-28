@@ -50,24 +50,9 @@ class ColorBismilahFragment : Fragment {
         }
     }
 
-    /**
-     * Callback interface for Bismillah entity editing events.
-     * Defined here because [EditBismilahEntityFragment] has not been converted yet;
-     * when it is, this interface should be moved into that fragment class.
-     */
-    interface IBismilahEntityCallback {
-        fun fromNow()
-        fun fromTheStart()
-        fun onAnim()
-        fun onColor()
-        fun onDelete()
-        fun onDone()
-        fun untilNow()
-        fun untilTheEnd()
-        fun update()
-        fun updateAya(color: Int)
-        fun updatePreset(preset: AyaTextPreset)
-    }
+    // IBismilahEntityCallback is now defined in EditBismilahEntityFragment.
+    // This typealias preserves backward compatibility for existing callers.
+    typealias IBismilahEntityCallback = EditBismilahEntityFragment.IBismilahEntityCallback
 
     private var adapter: ColorAdapter? = null
     private var binding: FragmentColorAyaBinding? = null

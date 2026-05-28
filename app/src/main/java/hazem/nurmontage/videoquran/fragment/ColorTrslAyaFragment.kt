@@ -50,29 +50,9 @@ class ColorTrslAyaFragment : Fragment {
         }
     }
 
-    /**
-     * Callback interface for translation Aya editing events.
-     * Defined here because [EditTrslEntityFragment] has not been converted yet;
-     * when it is, this interface should be moved into that fragment class.
-     */
-    interface IEditEntityCallback {
-        fun fromNow()
-        fun fromTheStart()
-        fun onAnim()
-        fun onColor()
-        fun onCut()
-        fun onDelete()
-        fun onDone()
-        fun onDuplicate()
-        fun onEdit()
-        fun onFont()
-        fun onIcon()
-        fun untilNow()
-        fun untilTheEnd()
-        fun updateAya(color: Int)
-        fun updatePreset(preset: AyaTextPreset)
-        fun updateTrsl(color: Int)
-    }
+    // IEditEntityCallback is now defined in EditTrslEntityFragment.
+    // This typealias preserves backward compatibility for existing callers.
+    typealias IEditEntityCallback = EditTrslEntityFragment.IEditEntityCallback
 
     private var adapter: ColorAdapter? = null
     private var binding: FragmentColorAyaBinding? = null
