@@ -24,10 +24,9 @@ import hazem.nurmontage.videoquran.model.IpadItem
  * - Displays frame preview thumbnails with Glide image loading
  * - Single-selection mode with alpha-based visual feedback
  * - Some frame types support dual variants (Glass/Normal) toggled by re-clicking
- * - Premium/subscribe gate for frames at index > 1
- * - Callback interface for frame type changes and premium dialog
+ * - All frames are available (billing removed)
+ * - Callback interface for frame type changes
  *
- * @property isSubscribe Whether the user has an active subscription
  * @property posSelect Currently selected frame position
  * @property ipadSelected Currently selected [Constants.IpadType] ordinal
  * @property ipadEditCallback Callback for frame editing events
@@ -35,7 +34,6 @@ import hazem.nurmontage.videoquran.model.IpadItem
  * @property isGlass Whether the glass variant is active (for dual-option frames)
  */
 class FrameAdapter(
-    private val isSubscribe: Boolean,
     private var posSelect: Int,
     private var ipadSelected: Int,
     private val ipadEditCallback: EditIpadFragment.IIpadEditCallback?,
@@ -102,11 +100,6 @@ class FrameAdapter(
             holder.itemView.alpha = 0.4f
             holder.imageView.setBackgroundResource(R.drawable.watch_btn_outline)
         }
-
-        // Show premium badge for non-subscribers (frames beyond the first 2)
-        if (!isSubscribe) {
-            holder.ivPro.visibility = if (position > 1) View.VISIBLE else View.GONE
-        }
     }
 
     override fun getItemCount(): Int = ipadItems?.size ?: 0
@@ -116,7 +109,6 @@ class FrameAdapter(
      * Handles click events for frame selection and glass-type toggling.
      */
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val ivPro: ImageView = itemView.findViewById(R.id.iv_pro)
         val lytOption: LinearLayout = itemView.findViewById(R.id.view_option)
         val imageView: ImageView = itemView.findViewById(R.id.img)
         val vDot1: View = itemView.findViewById(R.id.dot1)
@@ -132,12 +124,6 @@ class FrameAdapter(
                     if (!isManyOption(pos)) return@setOnClickListener
                     isGlass = !isGlass
                     callback.onGlassType(isGlass)
-                }
-
-                // Premium gate: non-subscribers can only use the first 2 frames
-                if (!isSubscribe && pos > 1) {
-                    callback.onDialogPremium()
-                    return@setOnClickListener
                 }
 
                 // Select the new frame

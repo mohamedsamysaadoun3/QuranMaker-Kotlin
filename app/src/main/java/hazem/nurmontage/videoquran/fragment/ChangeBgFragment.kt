@@ -1,12 +1,10 @@
 package hazem.nurmontage.videoquran.fragment
 
 import android.content.res.Resources
-import android.graphics.PorterDuff
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSnapHelper
@@ -29,6 +27,8 @@ import hazem.nurmontage.videoquran.views.TextCustumFont
  * The [IChangeBgCallback] extends [IBgCallback] so it can be passed
  * directly to [BgAdapter] for background selection events.
  *
+ * All features are available (billing removed).
+ *
  * Converted from ChangeBgFragment.java (295 lines).
  */
 class ChangeBgFragment : Fragment {
@@ -47,8 +47,6 @@ class ChangeBgFragment : Fragment {
             }
             return instance!!
         }
-
-        private const val DISABLED_COLOR = -8355712  // 0x808080 gray
     }
 
     /**
@@ -60,14 +58,12 @@ class ChangeBgFragment : Fragment {
         fun onCancel()
         fun onCrop()
         fun onDone()
-        fun onSubscribe()
         fun onUploadImg()
         fun onUploadVideo()
     }
 
     private var adapter: BgAdapter? = null
     private var callback: IChangeBgCallback? = null
-    private var isSubscribed: Boolean = false
     private var layoutAddVideo: View? = null
     private var layoutBgRv: View? = null
     private var recyclerView: RecyclerView? = null
@@ -87,7 +83,6 @@ class ChangeBgFragment : Fragment {
         if (arguments != null) {
             selectedBg = arguments?.getString("bg_select")
         }
-        isSubscribed = true // Billing removed — always subscribed
     }
 
     override fun onCreateView(
@@ -146,12 +141,7 @@ class ChangeBgFragment : Fragment {
             callback?.onUploadImg()
         }
         view.findViewById<View>(R.id.btn_add_video).setOnClickListener {
-            if (callback == null) return@setOnClickListener
-            if (!isSubscribed) {
-                callback!!.onSubscribe()
-            } else {
-                callback!!.onUploadVideo()
-            }
+            callback?.onUploadVideo()
         }
         view.findViewById<View>(R.id.btn_done).setOnClickListener {
             callback?.onDone()
@@ -159,15 +149,8 @@ class ChangeBgFragment : Fragment {
         view.findViewById<View>(R.id.btn_cancel).setOnClickListener {
             callback?.onCancel()
         }
-        val btnCrop: ImageButton = view.findViewById(R.id.btn_crop)
-        if (!isSubscribed) {
-            btnCrop.setColorFilter(DISABLED_COLOR, PorterDuff.Mode.SRC_IN)
-        }
-        btnCrop.setOnClickListener {
+        view.findViewById<View>(R.id.btn_crop).setOnClickListener {
             callback?.onCrop()
-        }
-        if (!isSubscribed) {
-            view.findViewById<View>(R.id.iv_data_disable).visibility = View.VISIBLE
         }
     }
 

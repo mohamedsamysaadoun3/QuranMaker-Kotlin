@@ -419,9 +419,6 @@ class EngineActivity : BaseActivity() {
             mTemplate?.index_color = position
             updateFrame()
         }
-        override fun onDialogPremium() {
-            dialogPremium(0)
-        }
         override fun onDone() {
             hideFragment()
             updateFrame()
@@ -1253,26 +1250,6 @@ class EngineActivity : BaseActivity() {
                 finish()
             }
             .setNegativeButton(negativeBtn, null)
-            .show()
-    }
-
-    /**
-     * Feature availability dialog — shown when a gated feature is attempted.
-     * Since the app is now FREE, this just shows a simple confirmation message.
-     * @param code The feature code that triggered the gate
-     */
-    private fun dialogPremium(code: Int) {
-        val isArabic = LocaleHelper.getLanguage(this) == "ar"
-        val title = if (isArabic) "ميزة متاحة" else "Feature Available"
-        val message = if (isArabic)
-            "هذه الميزة متاحة الآن مجاناً!"
-        else
-            "This feature is now available for free!"
-
-        AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton("OK", null)
             .show()
     }
 

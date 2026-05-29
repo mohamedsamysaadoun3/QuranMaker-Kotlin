@@ -65,7 +65,6 @@ class EditIpadFragment : Fragment {
         fun onChangeType(type: Int)
         fun onClick(color: Int, position: Int)
         fun onClick(gradient: hazem.nurmontage.videoquran.model.Gradient, position: Int)
-        fun onDialogPremium()
         fun onDone()
         fun onGlassType(isGlass: Boolean)
     }
@@ -139,7 +138,6 @@ class EditIpadFragment : Fragment {
         val posSelect = getPosSelect(ipadType, ipadItems)
 
         ipadAdapter = FrameAdapter(
-            true, // Billing removed — always subscribed
             posSelect,
             ipadType,
             iIpadEditCallback,

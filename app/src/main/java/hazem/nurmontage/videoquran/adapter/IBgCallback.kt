@@ -11,9 +11,8 @@ import hazem.nurmontage.videoquran.model.BgItem
  * a circular dependency on the Fragment package.
  *
  * The full `IChangeBgCallback` interface (with onAdd, onCancel, onCrop,
- * onDone, onSubscribe, onUploadImg, onUploadVideo) will be defined
- * when the ChangeBgFragment is implemented. That interface can extend
- * this one or implement it separately.
+ * onDone, onUploadImg, onUploadVideo) is defined in [ChangeBgFragment].
+ * That interface extends this one.
  *
  * @see BgAdapter
  * @see BgAdabterL

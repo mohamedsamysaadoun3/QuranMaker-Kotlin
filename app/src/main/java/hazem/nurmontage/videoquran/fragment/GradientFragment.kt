@@ -95,7 +95,6 @@ class GradientFragment : Fragment {
         adapter = PresetAdapter(
             iColorCallback,
             Common.getListGradientColor(),
-            false, // Billing removed — always show all gradients
             index
         )
 

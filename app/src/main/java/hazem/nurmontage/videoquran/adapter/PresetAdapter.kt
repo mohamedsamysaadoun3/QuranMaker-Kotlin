@@ -18,20 +18,18 @@ import hazem.nurmontage.videoquran.model.Gradient
  * Features:
  * - Displays gradient previews as rounded pill shapes
  * - Single-selection mode with stroke highlight border
- * - Premium/subscribe gate for gradients beyond the first 2
+ * - All gradients are available (billing removed)
  * - Static utility method [setGradientBackground] for applying gradient
  *   backgrounds to any View (used externally by other components)
  * - Callback delivers the selected gradient and its position
  *
  * @property iColorCallback Callback for gradient selection events
  * @property colors List of available gradient presets
- * @property isSubscribe Whether the user has an active subscription
  * @property posSelect Currently selected gradient position
  */
 class PresetAdapter(
     private var iColorCallback: IColor?,
     private val colors: List<Gradient>?,
-    private val isSubscribe: Boolean,
     private var posSelect: Int
 ) : RecyclerView.Adapter<PresetAdapter.ViewHolder>() {
 
@@ -111,20 +109,14 @@ class PresetAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val gradient = colors?.get(position) ?: return
         setGradientBackground(holder.imageView, holder.itemView, gradient, position == posSelect)
-
-        // Show premium lock overlay for non-subscribers (items beyond the first 2)
-        if (!isSubscribe && position > 1) {
-            holder.imageLayer.visibility = View.VISIBLE
-        } else {
-            holder.imageLayer.visibility = View.GONE
-        }
+        holder.imageLayer.visibility = View.GONE
     }
 
     override fun getItemCount(): Int = colors?.size ?: 0
 
     /**
      * ViewHolder for gradient preset items.
-     * Handles click events for gradient selection with subscribe gating.
+     * Handles click events for gradient selection.
      */
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageView: ImageView = itemView.findViewById(R.id.image)
@@ -138,8 +130,8 @@ class PresetAdapter(
                 val callback = iColorCallback ?: return@setOnClickListener
                 val pos = adapterPosition
 
-                // Skip if: not subscribed & beyond free tier, or already selected
-                if ((!isSubscribe && pos > 1) || posSelect == pos) return@setOnClickListener
+                // Skip if already selected
+                if (posSelect == pos) return@setOnClickListener
 
                 val oldPos = posSelect
                 posSelect = pos

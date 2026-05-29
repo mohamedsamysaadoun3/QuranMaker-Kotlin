@@ -21,10 +21,7 @@ import hazem.nurmontage.videoquran.model.Gradient
  * The gradient is drawn using [GradientDrawable] with a fully rounded
  * shape (100dp corner radius → circle).
  *
- * **Subscription gating**: If the user is not subscribed ([isSubscribe] = false),
- * only the first 2 gradient presets are selectable. Items beyond index 1
- * show a crown icon overlay (R.drawable.crown_24px via `R.id.layer`)
- * to indicate premium content. Tapping a locked item is silently ignored.
+ * All gradients are available (billing removed).
  *
  * When a gradient is selected:
  * 1. The previous selection border is removed
@@ -41,15 +38,11 @@ import hazem.nurmontage.videoquran.model.Gradient
 class GradientAdabter(
     private val iColorCallback: IColor?,
     private val colors: List<Gradient>,
-    private val isSubscribe: Boolean,
     selectedPos: Int
 ) : RecyclerView.Adapter<GradientAdabter.ViewHolder>() {
 
     /** The currently selected position. */
     private var posSelect: Int = selectedPos
-
-    /** Maximum number of free gradient presets (index 0 and 1). */
-    private val maxFree: Int = 1
 
     // ──────────────────────────────────────────────────────────────────────
     // Inner interface
@@ -152,13 +145,7 @@ class GradientAdabter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         setGradientBackground(holder.imageView, holder.itemView, colors[position], position == posSelect)
-
-        // Show lock icon for non-subscribers beyond the free tier
-        if (!isSubscribe && position > maxFree) {
-            holder.imageLayer.visibility = View.VISIBLE
-        } else {
-            holder.imageLayer.visibility = View.GONE
-        }
+        holder.imageLayer.visibility = View.GONE
     }
 
     override fun getItemCount(): Int = colors.size
@@ -172,11 +159,10 @@ class GradientAdabter(
      *
      * Contains two ImageViews:
      * - [imageView]: The gradient fill swatch (R.id.image)
-     * - [imageLayer]: The lock/crown overlay for premium items (R.id.layer)
+     * - [imageLayer]: The overlay icon (R.id.layer, now always hidden)
      *
-     * On click, if the user is subscribed or the item is within the
-     * free tier (position <= 1), and the item is not already selected,
-     * the selection moves and [IColor.onGradient] is called.
+     * On click, if the item is not already selected, the selection moves
+     * and [IColor.onGradient] is called.
      */
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
@@ -184,7 +170,7 @@ class GradientAdabter(
         val imageLayer: ImageView = itemView.findViewById(R.id.layer)
 
         init {
-            // Set a semi-transparent dark background on the lock icon overlay
+            // Set a semi-transparent dark background on the overlay
             setGradientBackground(imageLayer, -1895825408) // 0x8F000000
 
             itemView.setOnClickListener {
@@ -193,9 +179,7 @@ class GradientAdabter(
 
                 if (iColorCallback == null) return@setOnClickListener
 
-                // Subscription gate: non-subscribers can only select positions 0-1
-                val canSelect = isSubscribe || pos <= maxFree
-                if (!canSelect || posSelect == pos) return@setOnClickListener
+                if (posSelect == pos) return@setOnClickListener
 
                 val prevSelected = posSelect
                 posSelect = pos

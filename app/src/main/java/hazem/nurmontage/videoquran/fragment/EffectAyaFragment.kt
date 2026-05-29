@@ -234,7 +234,6 @@ class EffectAyaFragment : Fragment {
                     getIndex(inTransition, transition!!.type_in)
                 }
                 transitionEntityAdabters = TransitionEntityAdabters(
-                    true, // Billing removed — always subscribed
                     iTransition, inTransition, selectIndex, entityQuranTimeline!!
                 )
                 recyclerView?.adapter = transitionEntityAdabters

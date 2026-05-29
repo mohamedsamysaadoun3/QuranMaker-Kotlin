@@ -12,22 +12,18 @@ import hazem.nurmontage.videoquran.entity_timeline.EntityQuranTimeline
  * RecyclerView adapter for selecting Aya (Quran verse) transition effects.
  *
  * Similar to [TransitionBismilahAdabters] but operates on [EntityQuranTimeline]
- * entities and adds subscription gating. Non-subscribers see a lock overlay
- * on transitions beyond index 10, and tapping those items triggers
- * [ITransition.toSubscribe] instead of applying the transition.
+ * entities. All transitions are available (billing removed).
  *
  * The adapter tracks its own selection state and notifies the host via
  * [ITransition] callbacks. When the host calls [update] the entire data
  * set is replaced (e.g. switching from "in" to "out" transition list).
  *
- * @property isSubscribe        Whether the user has an active subscription
  * @property iTransition        Callback for transition selection events
  * @property entityQuranTimeline The Quran timeline entity this adapter operates on
  *
  * Converted from TransitionEntityAdabters.java (144 lines).
  */
 class TransitionEntityAdabters(
-    private val isSubscribe: Boolean,
     private val iTransition: ITransition?,
     list: List<TransitionItem>,
     select: Int,
@@ -55,7 +51,6 @@ class TransitionEntityAdabters(
         fun onHideFragment(entity: EntityQuranTimeline)
         fun playing(entity: EntityQuranTimeline)
         fun remove(index: Int, entity: EntityQuranTimeline)
-        fun toSubscribe()
         fun updateDurationIn(duration: Float, entity: EntityQuranTimeline)
         fun updateDurationOut(duration: Float, entity: EntityQuranTimeline)
     }
@@ -105,15 +100,6 @@ class TransitionEntityAdabters(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        // Show lock overlay for premium transitions (index > 10) when not subscribed
-        if (!isSubscribe) {
-            if (position > 10) {
-                holder.disableView.visibility = View.VISIBLE
-            } else {
-                holder.disableView.visibility = View.GONE
-            }
-        }
-
         val item = list[position]
         holder.animationItem.rotation = item.angle.toFloat()
         holder.animationItem.setImageResource(item.idRessource)
@@ -130,18 +116,11 @@ class TransitionEntityAdabters(
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val animationItem: ImageView = itemView.findViewById(R.id.anim_item)
-        val disableView: ImageView = itemView.findViewById(R.id.iv_disable)
 
         init {
             itemView.setOnClickListener {
                 val pos = adapterPosition
                 if (iTransition == null) return@setOnClickListener
-
-                // Premium gate: non-subscribers tapping premium transitions get subscribe prompt
-                if (!isSubscribe && pos > 10) {
-                    iTransition.toSubscribe()
-                    return@setOnClickListener
-                }
 
                 // Don't re-select the already selected item
                 if (select == pos) return@setOnClickListener
