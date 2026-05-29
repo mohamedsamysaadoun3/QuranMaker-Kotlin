@@ -42,7 +42,7 @@ class ColorAyaFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: ColorAyaFragment? = null
+        @JvmStatic var instance: ColorAyaFragment? = null
 
         fun getInstance(
             callback: ColorTrslAyaFragment.IEditEntityCallback?,

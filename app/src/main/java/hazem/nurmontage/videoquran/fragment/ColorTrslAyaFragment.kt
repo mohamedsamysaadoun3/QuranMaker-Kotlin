@@ -36,7 +36,7 @@ class ColorTrslAyaFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: ColorTrslAyaFragment? = null
+        @JvmStatic var instance: ColorTrslAyaFragment? = null
 
         fun getInstance(
             callback: IEditEntityCallback?,

@@ -23,7 +23,7 @@ class ProgressViewFragment : Fragment() {
 
     companion object {
         @Volatile
-        private var instance: ProgressViewFragment? = null
+        @JvmStatic var instance: ProgressViewFragment? = null
 
         fun getInstance(): ProgressViewFragment {
             if (instance == null) {

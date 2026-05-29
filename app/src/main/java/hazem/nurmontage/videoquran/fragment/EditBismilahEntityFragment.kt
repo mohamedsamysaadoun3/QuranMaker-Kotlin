@@ -37,7 +37,7 @@ class EditBismilahEntityFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EditBismilahEntityFragment? = null
+        @JvmStatic var instance: EditBismilahEntityFragment? = null
 
         fun getInstance(
             callback: IBismilahEntityCallback?,

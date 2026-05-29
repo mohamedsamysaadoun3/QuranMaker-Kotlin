@@ -164,7 +164,9 @@ dependencies {
     // ─── Konfetti ───
     // مكتشف: nl.dionsegijn.konfetti في jadx_output (30 ملف)
     // مكتشف: Kotlin metadata: mv={1, 8, 0}, xi=48
-    implementation("nl.dionsegijn:konfetti:2.0.4")
+    // في الإصدار 2.x تم تقسيم المكتبة إلى konfetti-core و konfetti-xml
+    implementation("nl.dionsegijn:konfetti-xml:2.0.4")
+    implementation("nl.dionsegijn:konfetti-core:2.0.4")
 
     // ═══════════════════════════════════════════════════════════
     // أدوات مساعدة - Utilities

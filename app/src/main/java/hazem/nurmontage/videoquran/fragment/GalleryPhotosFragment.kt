@@ -45,7 +45,7 @@ class GalleryPhotosFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: GalleryPhotosFragment? = null
+        @JvmStatic var instance: GalleryPhotosFragment? = null
 
         @Synchronized
         fun get(

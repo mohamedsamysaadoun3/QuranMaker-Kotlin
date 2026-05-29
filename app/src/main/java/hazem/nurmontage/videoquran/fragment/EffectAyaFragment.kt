@@ -48,7 +48,7 @@ class EffectAyaFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EffectAyaFragment? = null
+        @JvmStatic var instance: EffectAyaFragment? = null
 
         @Synchronized
         fun get(

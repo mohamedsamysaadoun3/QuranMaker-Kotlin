@@ -36,33 +36,33 @@ import hazem.nurmontage.videoquran.views.TrackEntityView
 class EntityAudio : Entity {
 
     // ── Audio metadata ───────────────────────────────────────────────
-    private var amps: FloatArray? = null
-    private var downX: Float = 0f
-    private var duration: Int = 0
-    private var effectAudio: EffectAudio = EffectAudio()
-    private var h: Float = 0f
-    private var iTrimLineCallback: TrackEntityView.ITrimLineCallback? = null
-    private var isApplyEffectInPreview: Boolean = false
-    private var isPlay: Boolean = false
-    private var isStartFadeIn: Boolean = false
-    private var isStartFadeOut: Boolean = false
-    private var lastLeft: Float = 0f
-    private var lastRight: Float = 0f
-    private var mediaPlayer: MediaPlayer? = null
-    private var minDuration: Int = 0
-    private var objectAnimator: ObjectAnimator? = null
-    private var paintLine: Paint? = null
-    private var paintPath: Paint? = null
-    private var path: Path? = null
-    private var pathFfmpeg: String? = null
-    private var pathFfmpegEffect: String? = null
-    private var pathsHttp: MutableList<String>? = null
-    private var renderer: WaveformBitmapRenderer? = null
-    private var scaleEffect: Float = 0f
-    private var secondInScreen: Float = 0f
-    private var tmpOffset: Float = 0f
-    private var uri: Uri? = null
-    private var videoPath: String? = null
+    internal var amps: FloatArray? = null
+    internal var downX: Float = 0f
+    internal var duration: Int = 0
+    var effectAudio: EffectAudio = EffectAudio()
+    internal var h: Float = 0f
+    internal var iTrimLineCallback: TrackEntityView.ITrimLineCallback? = null
+    internal var isApplyEffectInPreview: Boolean = false
+    internal var isPlay: Boolean = false
+    internal var isStartFadeIn: Boolean = false
+    internal var isStartFadeOut: Boolean = false
+    internal var lastLeft: Float = 0f
+    internal var lastRight: Float = 0f
+    var mediaPlayer: MediaPlayer? = null
+    internal var minDuration: Int = 0
+    internal var objectAnimator: ObjectAnimator? = null
+    internal var paintLine: Paint? = null
+    internal var paintPath: Paint? = null
+    internal var path: Path? = null
+    internal var pathFfmpeg: String? = null
+    internal var pathFfmpegEffect: String? = null
+    internal var pathsHttp: MutableList<String>? = null
+    internal var renderer: WaveformBitmapRenderer? = null
+    internal var scaleEffect: Float = 0f
+    internal var secondInScreen: Float = 0f
+    internal var tmpOffset: Float = 0f
+    internal var uri: Uri? = null
+    internal var videoPath: String? = null
     var waveformValues: ByteArray? = null
 
     // ── Constructors ─────────────────────────────────────────────────

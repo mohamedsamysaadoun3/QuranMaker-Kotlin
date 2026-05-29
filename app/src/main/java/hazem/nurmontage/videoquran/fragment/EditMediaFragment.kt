@@ -43,7 +43,7 @@ class EditMediaFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EditMediaFragment? = null
+        @JvmStatic var instance: EditMediaFragment? = null
 
         fun getInstance(
             callback: IEditMediaCallback?,

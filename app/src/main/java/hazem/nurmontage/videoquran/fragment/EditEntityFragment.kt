@@ -42,7 +42,7 @@ class EditEntityFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EditEntityFragment? = null
+        @JvmStatic var instance: EditEntityFragment? = null
 
         fun getInstance(
             callback: IEditEntityCallback?,

@@ -38,7 +38,7 @@ class ResizeFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: ResizeFragment? = null
+        @JvmStatic var instance: ResizeFragment? = null
 
         fun getInstance(
             callback: DimensionAdabters.IDimensionCallback?,

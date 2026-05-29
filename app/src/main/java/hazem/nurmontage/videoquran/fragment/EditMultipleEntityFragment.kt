@@ -32,7 +32,7 @@ class EditMultipleEntityFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EditMultipleEntityFragment? = null
+        @JvmStatic var instance: EditMultipleEntityFragment? = null
 
         private const val DISABLED_COLOR = -8355712  // 0x808080 — gray
         private const val ENABLED_COLOR = -1          // 0xFFFFFF — white

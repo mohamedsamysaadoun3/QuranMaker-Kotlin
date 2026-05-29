@@ -1835,7 +1835,7 @@ class EngineActivity : BaseActivity() {
                                 split.setVideo_path(entityAudio.getVideo_path())
                                 split.setApplyEffectInPreview(entityAudio.isApplyEffectInPreview())
                                 split.setEffectAudio(entityAudio.getEffectAudio())
-                                split.setmScaleFactor(entityAudio.getmScaleFactor())
+                                split.setscaleFactor(entityAudio.getscaleFactor())
                                 split.setMediaPlayer(entityAudio.getMediaPlayer())
                                 split.setPath_ffmpeg(entityAudio.getPath_ffmpeg())
                                 split.setIndex(entityAudio.getIndex() + 1)
@@ -1847,11 +1847,11 @@ class EngineActivity : BaseActivity() {
                                 trackViewEntity.stackSplit(entityAudio)
                                 entityAudio.setCurrentRect()
                                 entityAudio.setRight(abs)
-                                entityAudio.setMax((entityAudio.getRect().right / entityAudio.getmScaleFactor()) - ((entityAudio.getRect().left / entityAudio.getmScaleFactor()) - entityAudio.getOffset_left()))
+                                entityAudio.setMax((entityAudio.getRect().right / entityAudio.getscaleFactor()) - ((entityAudio.getRect().left / entityAudio.getscaleFactor()) - entityAudio.getOffset_left()))
                                 entityAudio.setEnd(f)
                                 split.setOffset_right(entityAudio.getOffset_right())
                                 entityAudio.setOffset_right(0.0f)
-                                split.setOffset(entityAudio.getOffset() + entityAudio.getOffset_left() + (entityAudio.getRect().width() / entityAudio.getmScaleFactor()))
+                                split.setOffset(entityAudio.getOffset() + entityAudio.getOffset_left() + (entityAudio.getRect().width() / entityAudio.getscaleFactor()))
                                 entityAudio.onChange()
                                 split.setSecond_in_screen(trackViewEntity.getSecond_in_screenNoScale())
                                 split.updateEffect()
@@ -2062,10 +2062,10 @@ class EngineActivity : BaseActivity() {
                     if (entityQuranTimeline2.getTransition() == null) {
                         entityQuranTimeline2.setTransition(Transition())
                     }
-                    entityQuranTimeline2.getTransition()!!.setOut(entityQuranTimeline.getTransition()!!.isOut())
+                    entityQuranTimeline2.getTransition()!!.setOut(entityQuranTimeline.getTransition()!!.isOut()
                     entityQuranTimeline2.getTransition()!!.setType_out(entityQuranTimeline.getTransition()!!.getType_out())
                     entityQuranTimeline2.getTransition()!!.setDuration_out(entityQuranTimeline.getTransition()!!.getDuration_out())
-                    entityQuranTimeline2.getTransition()!!.setIn(entityQuranTimeline.getTransition()!!.isIn())
+                    entityQuranTimeline2.getTransition()!!.setIn(entityQuranTimeline.getTransition()!!.isIn()
                     entityQuranTimeline2.getTransition()!!.setType_in(entityQuranTimeline.getTransition()!!.getType_in())
                     entityQuranTimeline2.getTransition()!!.setDuration_in(entityQuranTimeline.getTransition()!!.getDuration_in())
                 }
@@ -2171,10 +2171,10 @@ class EngineActivity : BaseActivity() {
                 if (entityQuranTimeline.getTransition() == null) {
                     entityQuranTimeline.setTransition(Transition())
                 }
-                entityQuranTimeline.getTransition()!!.setOut(entityBismilahTimeline.getTransition()!!.isOut())
+                entityQuranTimeline.getTransition()!!.setOut(entityBismilahTimeline.getTransition()!!.isOut()
                 entityQuranTimeline.getTransition()!!.setType_out(entityBismilahTimeline.getTransition()!!.getType_out())
                 entityQuranTimeline.getTransition()!!.setDuration_out(entityBismilahTimeline.getTransition()!!.getDuration_out())
-                entityQuranTimeline.getTransition()!!.setIn(entityBismilahTimeline.getTransition()!!.isIn())
+                entityQuranTimeline.getTransition()!!.setIn(entityBismilahTimeline.getTransition()!!.isIn()
                 entityQuranTimeline.getTransition()!!.setType_in(entityBismilahTimeline.getTransition()!!.getType_in())
                 entityQuranTimeline.getTransition()!!.setDuration_in(entityBismilahTimeline.getTransition()!!.getDuration_in())
             }
@@ -2526,12 +2526,12 @@ private fun initViews() {
         override fun onSquare() {}
         override fun onEndMove() {
             if (blurredImageView.entity_select != null) {
-                blurredImageView.applyAll(blurredImageView.entity_select!!.factor_scale, blurredImageView.entity_select!!.rect, blurredImageView.entity_select!!.max_w, blurredImageView.entity_select!!.max_h)
+                blurredImageView.applyAll(blurredImageView.entity_select!!.scaleFactor, blurredImageView.entity_select!!.rect, blurredImageView.entity_select!!.max_w, blurredImageView.entity_select!!.max_h)
             }
         }
         override fun onEndScale() {
             if (blurredImageView.entity_select != null) {
-                blurredImageView.applyAll(blurredImageView.entity_select!!.factor_scale, blurredImageView.entity_select!!.rect, blurredImageView.entity_select!!.max_w, blurredImageView.entity_select!!.max_h)
+                blurredImageView.applyAll(blurredImageView.entity_select!!.scaleFactor, blurredImageView.entity_select!!.rect, blurredImageView.entity_select!!.max_w, blurredImageView.entity_select!!.max_h)
             }
         }
         override fun onSelect(entityView: EntityView) {
@@ -2999,8 +2999,8 @@ private fun saveTemplateTmp() {
                         entityQuranTimeline.transition, f2, f22,
                         entityQuranTimeline.quranEntity.copyRect!!.left * mTemplate.width,
                         mTemplate.height * entityQuranTimeline.quranEntity.copyRect!!.top,
-                        entityQuranTimeline.rect.left / entityQuranTimeline.mScaleFactor,
-                        entityQuranTimeline.rect.right / entityQuranTimeline.mScaleFactor,
+                        entityQuranTimeline.rect.left / entityQuranTimeline.scaleFactor,
+                        entityQuranTimeline.rect.right / entityQuranTimeline.scaleFactor,
                         entityQuranTimeline.quranEntity.txt,
                         entityQuranTimeline.quranEntity.complete_aya,
                         entityQuranTimeline.quranEntity.nameFont,
@@ -3013,7 +3013,7 @@ private fun saveTemplateTmp() {
                     entityQuranTemplate.height = (entityQuranTimeline.quranEntity.copyRect!!.bottom * mTemplate.height) - (entityQuranTimeline.quranEntity.copyRect!!.top * mTemplate.height)
                     entityQuranTemplate.factor_size = entityQuranTimeline.quranEntity.factorSize
                     entityQuranTemplate.factor_sizeTrl = entityQuranTimeline.quranEntity.factorSizeTrl
-                    entityQuranTemplate.scale = entityQuranTimeline.quranEntity.factor_scale
+                    entityQuranTemplate.scale = entityQuranTimeline.quranEntity.scaleFactor
                     entityQuranTemplate.translation = entityQuranTimeline.quranEntity.translation
                     entityQuranTemplate.translation_complete = entityQuranTimeline.quranEntity.translation_complete
                     entityQuranTemplate.startWord_index = entityQuranTimeline.quranEntity.startWord_index
@@ -3045,8 +3045,8 @@ private fun saveTemplateTmp() {
                         entityTrslTimeline.transition, f23, f24,
                         entityTrslTimeline.quranEntity.copyRect!!.left * mTemplate.width,
                         mTemplate.height * entityTrslTimeline.quranEntity.copyRect!!.top,
-                        entityTrslTimeline.rect.left / entityTrslTimeline.mScaleFactor,
-                        entityTrslTimeline.rect.right / entityTrslTimeline.mScaleFactor,
+                        entityTrslTimeline.rect.left / entityTrslTimeline.scaleFactor,
+                        entityTrslTimeline.rect.right / entityTrslTimeline.scaleFactor,
                         entityTrslTimeline.quranEntity.txt,
                         entityTrslTimeline.quranEntity.nameFont,
                         entityTrslTimeline.quranEntity.number,
@@ -3056,7 +3056,7 @@ private fun saveTemplateTmp() {
                     entityTranslationTemplate.height = (entityTrslTimeline.quranEntity.copyRect!!.bottom * mTemplate.height) - (entityTrslTimeline.quranEntity.copyRect!!.top * mTemplate.height)
                     entityTranslationTemplate.factor_size = entityTrslTimeline.quranEntity.factorSize
                     entityTranslationTemplate.factor_sizeTrl = entityTrslTimeline.quranEntity.factorSizeTrl
-                    entityTranslationTemplate.scale = entityTrslTimeline.quranEntity.factor_scale
+                    entityTranslationTemplate.scale = entityTrslTimeline.quranEntity.scaleFactor
                     entityTranslationTemplate.file = entityTrslTimeline.file
                     entityTranslationTemplate.file_in = entityTrslTimeline.file_in
                     entityTranslationTemplate.file_out = entityTrslTimeline.file_out
@@ -3082,15 +3082,15 @@ private fun saveTemplateTmp() {
                 bismilahTimeline.transition, f25, f26,
                 bismilahTimeline.quranEntity.copyRect!!.left * mTemplate.width,
                 mTemplate.height * bismilahTimeline.quranEntity.copyRect!!.top,
-                bismilahTimeline.rect.left / bismilahTimeline.mScaleFactor,
-                bismilahTimeline.rect.right / bismilahTimeline.mScaleFactor,
+                bismilahTimeline.rect.left / bismilahTimeline.scaleFactor,
+                bismilahTimeline.rect.right / bismilahTimeline.scaleFactor,
                 bismilahTimeline.quranEntity.txt,
                 bismilahTimeline.quranEntity.clrAya,
                 bismilahTimeline.quranEntity.mPreset
             )
             entityBismilahTemplate.height = (bismilahTimeline.quranEntity.copyRect!!.bottom * mTemplate.height) - (bismilahTimeline.quranEntity.copyRect!!.top * mTemplate.height)
             entityBismilahTemplate.factor_size = bismilahTimeline.quranEntity.factorSize
-            entityBismilahTemplate.scale = bismilahTimeline.quranEntity.factor_scale
+            entityBismilahTemplate.scale = bismilahTimeline.quranEntity.scaleFactor
             entityBismilahTemplate.file = bismilahTimeline.file
             entityBismilahTemplate.file_in = bismilahTimeline.file_in
             entityBismilahTemplate.file_out = bismilahTimeline.file_out
@@ -3110,15 +3110,15 @@ private fun saveTemplateTmp() {
                 bismilahTimeline2.transition, f27, f28,
                 bismilahTimeline2.quranEntity.copyRect!!.left * mTemplate.width,
                 mTemplate.height * bismilahTimeline2.quranEntity.copyRect!!.top,
-                bismilahTimeline2.rect.left / bismilahTimeline2.mScaleFactor,
-                bismilahTimeline2.rect.right / bismilahTimeline2.mScaleFactor,
+                bismilahTimeline2.rect.left / bismilahTimeline2.scaleFactor,
+                bismilahTimeline2.rect.right / bismilahTimeline2.scaleFactor,
                 bismilahTimeline2.quranEntity.txt,
                 bismilahTimeline2.quranEntity.clrAya,
                 bismilahTimeline2.quranEntity.mPreset
             )
             entityBismilahTemplate2.height = (bismilahTimeline2.quranEntity.copyRect!!.bottom * mTemplate.height) - (bismilahTimeline2.quranEntity.copyRect!!.top * mTemplate.height)
             entityBismilahTemplate2.factor_size = bismilahTimeline2.quranEntity.factorSize
-            entityBismilahTemplate2.scale = bismilahTimeline2.quranEntity.factor_scale
+            entityBismilahTemplate2.scale = bismilahTimeline2.quranEntity.scaleFactor
             entityBismilahTemplate2.file = bismilahTimeline2.file
             entityBismilahTemplate2.file_in = bismilahTimeline2.file_in
             entityBismilahTemplate2.file_out = bismilahTimeline2.file_out
@@ -3142,7 +3142,7 @@ private fun saveTemplateTmp() {
                     mTemplate.mDrawingTranslationX + blurredImageView.rectFSurahName.left,
                     mTemplate.mDrawingTranslationY + blurredImageView.rectFSurahName.top,
                     MRectF(blurredImageView.surahNameEntity!!.copyRect!!.left, blurredImageView.surahNameEntity!!.copyRect!!.top, blurredImageView.surahNameEntity!!.copyRect!!.right, blurredImageView.surahNameEntity!!.copyRect!!.bottom),
-                    blurredImageView.surahNameEntity!!.factor_scale,
+                    blurredImageView.surahNameEntity!!.scaleFactor,
                     blurredImageView.surahNameEntity!!.nameFont,
                     blurredImageView.surahNameEntity!!.clrS_name,
                     blurredImageView.surahNameEntity!!.mPreset,
@@ -3159,7 +3159,7 @@ private fun saveTemplateTmp() {
                 mTemplate.entitySurahTemplate!!.clr = blurredImageView.surahNameEntity!!.clrS_name
                 mTemplate.entitySurahTemplate!!.preset = blurredImageView.surahNameEntity!!.mPreset
                 mTemplate.entitySurahTemplate!!.name_font = blurredImageView.surahNameEntity!!.nameFont
-                mTemplate.entitySurahTemplate!!.factor_scale = blurredImageView.surahNameEntity!!.factor_scale
+                mTemplate.entitySurahTemplate!!.scaleFactor = blurredImageView.surahNameEntity!!.scaleFactor
                 mTemplate.entitySurahTemplate!!.rectF = MRectF(blurredImageView.surahNameEntity!!.copyRect!!.left, blurredImageView.surahNameEntity!!.copyRect!!.top, blurredImageView.surahNameEntity!!.copyRect!!.right, blurredImageView.surahNameEntity!!.copyRect!!.bottom)
                 mTemplate.entitySurahTemplate!!.name = blurredImageView.surahNameEntity!!.name
                 mTemplate.entitySurahTemplate!!.reader = blurredImageView.surahNameEntity!!.reader
@@ -3232,8 +3232,8 @@ private fun saveTemplate() {
                         entityQuranTimeline.transition, f2, f22,
                         entityQuranTimeline.quranEntity.copyRect!!.left * engineActivity.mTemplate.width,
                         engineActivity.mTemplate.height * entityQuranTimeline.quranEntity.copyRect!!.top,
-                        entityQuranTimeline.rect.left / entityQuranTimeline.mScaleFactor,
-                        entityQuranTimeline.rect.right / entityQuranTimeline.mScaleFactor,
+                        entityQuranTimeline.rect.left / entityQuranTimeline.scaleFactor,
+                        entityQuranTimeline.rect.right / entityQuranTimeline.scaleFactor,
                         entityQuranTimeline.quranEntity.txt, entityQuranTimeline.quranEntity.complete_aya,
                         entityQuranTimeline.quranEntity.nameFont, entityQuranTimeline.quranEntity.indexNumber,
                         entityQuranTimeline.quranEntity.number, entityQuranTimeline.quranEntity.clrAya,
@@ -3243,7 +3243,7 @@ private fun saveTemplate() {
                     entityQuranTemplate.height = (entityQuranTimeline.quranEntity.copyRect!!.bottom * engineActivity.mTemplate.height) - (entityQuranTimeline.quranEntity.copyRect!!.top * engineActivity.mTemplate.height)
                     entityQuranTemplate.factor_size = entityQuranTimeline.quranEntity.factorSize
                     entityQuranTemplate.factor_sizeTrl = entityQuranTimeline.quranEntity.factorSizeTrl
-                    entityQuranTemplate.scale = entityQuranTimeline.quranEntity.factor_scale
+                    entityQuranTemplate.scale = entityQuranTimeline.quranEntity.scaleFactor
                     entityQuranTemplate.translation = entityQuranTimeline.quranEntity.translation
                     entityQuranTemplate.translation_complete = entityQuranTimeline.quranEntity.translation_complete
                     entityQuranTemplate.startWord_index = entityQuranTimeline.quranEntity.startWord_index
@@ -3272,8 +3272,8 @@ private fun saveTemplate() {
                         entityTrslTimeline.transition, f23, f24,
                         entityTrslTimeline.quranEntity.copyRect!!.left * engineActivity.mTemplate.width,
                         engineActivity.mTemplate.height * entityTrslTimeline.quranEntity.copyRect!!.top,
-                        entityTrslTimeline.rect.left / entityTrslTimeline.mScaleFactor,
-                        entityTrslTimeline.rect.right / entityTrslTimeline.mScaleFactor,
+                        entityTrslTimeline.rect.left / entityTrslTimeline.scaleFactor,
+                        entityTrslTimeline.rect.right / entityTrslTimeline.scaleFactor,
                         entityTrslTimeline.quranEntity.txt, entityTrslTimeline.quranEntity.nameFont,
                         entityTrslTimeline.quranEntity.number, entityTrslTimeline.quranEntity.clrAya,
                         entityTrslTimeline.quranEntity.mPreset
@@ -3281,7 +3281,7 @@ private fun saveTemplate() {
                     entityTranslationTemplate.height = (entityTrslTimeline.quranEntity.copyRect!!.bottom * engineActivity.mTemplate.height) - (entityTrslTimeline.quranEntity.copyRect!!.top * engineActivity.mTemplate.height)
                     entityTranslationTemplate.factor_size = entityTrslTimeline.quranEntity.factorSize
                     entityTranslationTemplate.factor_sizeTrl = entityTrslTimeline.quranEntity.factorSizeTrl
-                    entityTranslationTemplate.scale = entityTrslTimeline.quranEntity.factor_scale
+                    entityTranslationTemplate.scale = entityTrslTimeline.quranEntity.scaleFactor
                     entityTranslationTemplate.file = entityTrslTimeline.file
                     entityTranslationTemplate.file_in = entityTrslTimeline.file_in
                     entityTranslationTemplate.file_out = entityTrslTimeline.file_out
@@ -3307,14 +3307,14 @@ private fun saveTemplate() {
                 bismilahTimeline.transition, f25, f26,
                 bismilahTimeline.quranEntity.copyRect!!.left * engineActivity.mTemplate.width,
                 engineActivity.mTemplate.height * bismilahTimeline.quranEntity.copyRect!!.top,
-                bismilahTimeline.rect.left / bismilahTimeline.mScaleFactor,
-                bismilahTimeline.rect.right / bismilahTimeline.mScaleFactor,
+                bismilahTimeline.rect.left / bismilahTimeline.scaleFactor,
+                bismilahTimeline.rect.right / bismilahTimeline.scaleFactor,
                 bismilahTimeline.quranEntity.txt, bismilahTimeline.quranEntity.clrAya,
                 bismilahTimeline.quranEntity.mPreset
             )
             entityBismilahTemplate.height = (bismilahTimeline.quranEntity.copyRect!!.bottom * engineActivity.mTemplate.height) - (bismilahTimeline.quranEntity.copyRect!!.top * engineActivity.mTemplate.height)
             entityBismilahTemplate.factor_size = bismilahTimeline.quranEntity.factorSize
-            entityBismilahTemplate.scale = bismilahTimeline.quranEntity.factor_scale
+            entityBismilahTemplate.scale = bismilahTimeline.quranEntity.scaleFactor
             entityBismilahTemplate.file = bismilahTimeline.file
             entityBismilahTemplate.file_in = bismilahTimeline.file_in
             entityBismilahTemplate.file_out = bismilahTimeline.file_out
@@ -3334,14 +3334,14 @@ private fun saveTemplate() {
                 bismilahTimeline2.transition, f27, f28,
                 bismilahTimeline2.quranEntity.copyRect!!.left * engineActivity.mTemplate.width,
                 engineActivity.mTemplate.height * bismilahTimeline2.quranEntity.copyRect!!.top,
-                bismilahTimeline2.rect.left / bismilahTimeline2.mScaleFactor,
-                bismilahTimeline2.rect.right / bismilahTimeline2.mScaleFactor,
+                bismilahTimeline2.rect.left / bismilahTimeline2.scaleFactor,
+                bismilahTimeline2.rect.right / bismilahTimeline2.scaleFactor,
                 bismilahTimeline2.quranEntity.txt, bismilahTimeline2.quranEntity.clrAya,
                 bismilahTimeline2.quranEntity.mPreset
             )
             entityBismilahTemplate2.height = (bismilahTimeline2.quranEntity.copyRect!!.bottom * engineActivity.mTemplate.height) - (bismilahTimeline2.quranEntity.copyRect!!.top * engineActivity.mTemplate.height)
             entityBismilahTemplate2.factor_size = bismilahTimeline2.quranEntity.factorSize
-            entityBismilahTemplate2.scale = bismilahTimeline2.quranEntity.factor_scale
+            entityBismilahTemplate2.scale = bismilahTimeline2.quranEntity.scaleFactor
             entityBismilahTemplate2.file = bismilahTimeline2.file
             entityBismilahTemplate2.file_in = bismilahTimeline2.file_in
             entityBismilahTemplate2.file_out = bismilahTimeline2.file_out
@@ -3361,7 +3361,7 @@ private fun saveTemplate() {
                         engineActivity.mTemplate.mDrawingTranslationX + engineActivity.blurredImageView.rectFSurahName.left,
                         engineActivity.mTemplate.mDrawingTranslationY + engineActivity.blurredImageView.rectFSurahName.top,
                         MRectF(engineActivity.blurredImageView.surahNameEntity!!.copyRect!!.left, engineActivity.blurredImageView.surahNameEntity!!.copyRect!!.top, engineActivity.blurredImageView.surahNameEntity!!.copyRect!!.right, engineActivity.blurredImageView.surahNameEntity!!.copyRect!!.bottom),
-                        engineActivity.blurredImageView.surahNameEntity!!.factor_scale,
+                        engineActivity.blurredImageView.surahNameEntity!!.scaleFactor,
                         engineActivity.blurredImageView.surahNameEntity!!.nameFont,
                         engineActivity.blurredImageView.surahNameEntity!!.clrS_name,
                         engineActivity.blurredImageView.surahNameEntity!!.mPreset,
@@ -3381,7 +3381,7 @@ private fun saveTemplate() {
                 engineActivity.mTemplate.entitySurahTemplate!!.clr = engineActivity.blurredImageView.surahNameEntity!!.clrS_name
                 engineActivity.mTemplate.entitySurahTemplate!!.preset = engineActivity.blurredImageView.surahNameEntity!!.mPreset
                 engineActivity.mTemplate.entitySurahTemplate!!.name_font = engineActivity.blurredImageView.surahNameEntity!!.nameFont
-                engineActivity.mTemplate.entitySurahTemplate!!.factor_scale = engineActivity.blurredImageView.surahNameEntity!!.factor_scale
+                engineActivity.mTemplate.entitySurahTemplate!!.scaleFactor = engineActivity.blurredImageView.surahNameEntity!!.scaleFactor
                 engineActivity.mTemplate.entitySurahTemplate!!.rectF = MRectF(engineActivity.blurredImageView.surahNameEntity!!.copyRect!!.left, engineActivity.blurredImageView.surahNameEntity!!.copyRect!!.top, engineActivity.blurredImageView.surahNameEntity!!.copyRect!!.right, engineActivity.blurredImageView.surahNameEntity!!.copyRect!!.bottom)
                 engineActivity.mTemplate.entitySurahTemplate!!.name = engineActivity.blurredImageView.surahNameEntity!!.name
                 engineActivity.mTemplate.entitySurahTemplate!!.reader = engineActivity.blurredImageView.surahNameEntity!!.reader
@@ -4383,7 +4383,7 @@ private fun duplicateEntityAudio(i: Int, entityAudio: EntityAudio) {
         entityAudio2.effectAudio = entityAudio.effectAudio
         entityAudio2.video_path = entityAudio.video_path
         entityAudio2.isApplyEffectInPreview = entityAudio.isApplyEffectInPreview
-        entityAudio2.mScaleFactor = entityAudio.mScaleFactor
+        entityAudio2.scaleFactor = entityAudio.scaleFactor
         entityAudio2.setIndex(entityAudio.index + 1)
         entityAudio2.offset_right = entityAudio.offset_right
         entityAudio2.offset_left = entityAudio.offset_left
@@ -4549,7 +4549,7 @@ fun applyffectAll(effectAudio: EffectAudio, i: Int) {
                             entityAudio.duration = mediaPlayer.duration * 1000
                             entityAudio.end = mediaPlayer.duration.toFloat()
                             entityAudio.start = 0.0f
-                            entityAudio.max = (entityAudio.rect.right / entityAudio.mScaleFactor) - ((entityAudio.rect.left / entityAudio.mScaleFactor) - entityAudio.offset_left)
+                            entityAudio.max = (entityAudio.rect.right / entityAudio.scaleFactor) - ((entityAudio.rect.left / entityAudio.scaleFactor) - entityAudio.offset_left)
                             trackViewEntity.updateWhenEffect(entityAudio)
                         }
                         entityAudio.mediaPlayer = this@EngineActivity.mPlayer
@@ -4591,7 +4591,7 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
                         if (entityAudio.mediaPlayer != null && mediaPlayer.duration != entityAudio.mediaPlayer!!.duration) {
                             entityAudio.setRight(entityAudio.rect.left + Math.round(trackViewEntity.second_in_screen * (mediaPlayer.duration / 1000.0f)))
                             entityAudio.duration = mediaPlayer.duration * 1000
-                            entityAudio.max = (entityAudio.rect.right / entityAudio.mScaleFactor) - ((entityAudio.rect.left / entityAudio.mScaleFactor) - entityAudio.offset_left)
+                            entityAudio.max = (entityAudio.rect.right / entityAudio.scaleFactor) - ((entityAudio.rect.left / entityAudio.scaleFactor) - entityAudio.offset_left)
                             trackViewEntity.updateWhenEffect(entityAudio)
                             runOnUiThread {
                                 trackViewEntity.invalidate()
@@ -4655,14 +4655,14 @@ fun addTimeLineQuran(i: Int, translationQuranEntity: TranslationQuranEntity, f: 
 
 fun splitTimeLineQuran(i: Int, quranEntity: QuranEntity, f: Float, f2: Float, f3: Float): EntityQuranTimeline {
     val entityQuranTimeline = EntityQuranTimeline(quranEntity, f, 0.0f, trackViewEntity.width * 0.077f, f2, trackViewEntity.second_in_screen)
-    entityQuranTimeline.mScaleFactor = f3
+    entityQuranTimeline.scaleFactor = f3
     trackViewEntity.addQuran_split(entityQuranTimeline, i)
     return entityQuranTimeline
 }
 
 fun splitTimeLineQuran(i: Int, translationQuranEntity: TranslationQuranEntity, f: Float, f2: Float, f3: Float): EntityTrslTimeline {
     val entityTrslTimeline = EntityTrslTimeline(translationQuranEntity, f, 0.0f, trackViewEntity.width * 0.077f, f2, trackViewEntity.second_in_screen)
-    entityTrslTimeline.mScaleFactor = f3
+    entityTrslTimeline.scaleFactor = f3
     trackViewEntity.addQuran_split(entityTrslTimeline, i)
     return entityTrslTimeline
 }
@@ -4912,7 +4912,7 @@ private fun disableUndoBtn() {
         quranEntity.setIcon(str5)
         quranEntity.setViewWeakReference(WeakReference(trackViewEntity), WeakReference(blurredImageView))
         val addTimeLineQuran = addTimeLineQuran(quranEntity)
-        addTimeLineQuran.setmScaleFactor(trackViewEntity.getScaleFactor())
+        addTimeLineQuran.setscaleFactor(trackViewEntity.getScaleFactor())
         quranEntity.setEntityQuran(addTimeLineQuran)
         addTimeLineQuran.setEntityView(quranEntity)
         blurredImageView.addEntity(quranEntity)
@@ -4929,7 +4929,7 @@ private fun disableUndoBtn() {
         translationQuranEntity.setCanvasWH(blurredImageView.getmCanvas_width(), blurredImageView.getmCanvas_height())
         translationQuranEntity.setViewWeakReference(WeakReference(trackViewEntity), WeakReference(blurredImageView))
         val addTimeLineTrslQuran = addTimeLineTrslQuran(translationQuranEntity)
-        addTimeLineTrslQuran.setmScaleFactor(trackViewEntity.getScaleFactor())
+        addTimeLineTrslQuran.setscaleFactor(trackViewEntity.getScaleFactor())
         translationQuranEntity.setEntityTrslTimeline(addTimeLineTrslQuran)
         addTimeLineTrslQuran.setEntityView(translationQuranEntity)
         blurredImageView.addEntity(translationQuranEntity)
@@ -5020,7 +5020,7 @@ private fun disableUndoBtn() {
         bismilahEntity.setFcSize(bismilahEntity.getPaintAya().textSize / blurredImageView.getmCanvas_width())
         bismilahEntity.setViewWeakReference(WeakReference(trackViewEntity), WeakReference(blurredImageView))
         val addTimeLineBismilah = addTimeLineBismilah(bismilahEntity)
-        addTimeLineBismilah.setmScaleFactor(trackViewEntity.getScaleFactor())
+        addTimeLineBismilah.setscaleFactor(trackViewEntity.getScaleFactor())
         bismilahEntity.setBismilahTimeline(addTimeLineBismilah)
         addTimeLineBismilah.setEntityView(bismilahEntity)
         blurredImageView.addBismilahEntity(bismilahEntity)
@@ -5047,7 +5047,7 @@ private fun disableUndoBtn() {
         bismilahEntity.setFcSize(bismilahEntity.getPaintAya().textSize / blurredImageView.getmCanvas_width())
         bismilahEntity.setViewWeakReference(WeakReference(trackViewEntity), WeakReference(blurredImageView))
         val addTimeLineIsti3ada = addTimeLineIsti3ada(bismilahEntity)
-        addTimeLineIsti3ada.setmScaleFactor(trackViewEntity.getScaleFactor())
+        addTimeLineIsti3ada.setscaleFactor(trackViewEntity.getScaleFactor())
         bismilahEntity.setBismilahTimeline(addTimeLineIsti3ada)
         addTimeLineIsti3ada.setEntityView(bismilahEntity)
         blurredImageView.addIsti3adhaEntity(bismilahEntity)
@@ -5104,7 +5104,7 @@ private fun disableUndoBtn() {
             quranEntity.getEntityQuran().rect.right,
             quranEntity.getEntityQuran().rect.right + quranEntity.getEntityQuran().rect.width()
         )
-        addTimeLineQuran.setmScaleFactor(quranEntity.getEntityQuran().getmScaleFactor())
+        addTimeLineQuran.setscaleFactor(quranEntity.getEntityQuran().getscaleFactor())
         quranEntity2.setEntityQuran(addTimeLineQuran)
         addTimeLineQuran.setEntityView(quranEntity2)
         if (quranEntity.getEntityQuran().getTransition() != null) {
@@ -5149,16 +5149,16 @@ private fun disableUndoBtn() {
         val transition = translationQuranEntity.getEntityTrslTimeline().getTransition()
         if (transition != null) {
             addTimeLineQuran.setTransition(transition.duplicate())
-            if (transition.isIn() && transition.isOut()) {
+            if (transition.isIn() && transition.isOut() {
                 addTimeLineQuran.getTransition()!!.setIn(false)
                 transition.setOut(false)
-            } else if (transition.isIn()) {
+            } else if (transition.isIn() {
                 addTimeLineQuran.getTransition()!!.setIn(false)
-            } else if (transition.isOut()) {
+            } else if (transition.isOut() {
                 transition.setOut(false)
             }
         }
-        addTimeLineQuran.setmScaleFactor(translationQuranEntity.getEntityTrslTimeline().getmScaleFactor())
+        addTimeLineQuran.setscaleFactor(translationQuranEntity.getEntityTrslTimeline().getscaleFactor())
         translationQuranEntity2.setEntityTrslTimeline(addTimeLineQuran)
         addTimeLineQuran.setEntityView(translationQuranEntity2)
         if (translationQuranEntity.getEntityTrslTimeline().getTransition() != null) {
@@ -5214,17 +5214,17 @@ private fun disableUndoBtn() {
                     translationQuranEntity2,
                     abs(trackViewEntity.getCurrentPosition()),
                     translationQuranEntity.getEntityTrslTimeline().rect.right,
-                    translationQuranEntity.getEntityTrslTimeline().getmScaleFactor()
+                    translationQuranEntity.getEntityTrslTimeline().getscaleFactor()
                 )
                 val transition = translationQuranEntity.getEntityTrslTimeline().getTransition()
                 if (transition != null) {
                     splitTimeLineQuran.setTransition(transition.duplicate())
-                    if (transition.isIn() && transition.isOut()) {
+                    if (transition.isIn() && transition.isOut() {
                         splitTimeLineQuran.getTransition()!!.setIn(false)
                         transition.setOut(false)
-                    } else if (transition.isIn()) {
+                    } else if (transition.isIn() {
                         splitTimeLineQuran.getTransition()!!.setIn(false)
-                    } else if (transition.isOut()) {
+                    } else if (transition.isOut() {
                         transition.setOut(false)
                     }
                 }
@@ -5303,17 +5303,17 @@ private fun disableUndoBtn() {
                     quranEntity.getEntityQuran().index + 1, quranEntity2,
                     abs(trackViewEntity.getCurrentPosition()),
                     quranEntity.getEntityQuran().rect.right,
-                    quranEntity.getEntityQuran().getmScaleFactor()
+                    quranEntity.getEntityQuran().getscaleFactor()
                 )
                 val transition = quranEntity.getEntityQuran().getTransition()
                 if (transition != null) {
                     splitTimeLineQuran.setTransition(transition.duplicate())
-                    if (transition.isIn() && transition.isOut()) {
+                    if (transition.isIn() && transition.isOut() {
                         splitTimeLineQuran.getTransition()!!.setIn(false)
                         transition.setOut(false)
-                    } else if (transition.isIn()) {
+                    } else if (transition.isIn() {
                         splitTimeLineQuran.getTransition()!!.setIn(false)
-                    } else if (transition.isOut()) {
+                    } else if (transition.isOut() {
                         transition.setOut(false)
                     }
                 }
@@ -7450,8 +7450,8 @@ private fun disableUndoBtn() {
                                 entityAudio.setEnd(mediaPlayer.duration.toLong())
                                 entityAudio.setStart(0.0f)
                                 entityAudio.setMax(
-                                    (entityAudio.getRect().right / entityAudio.getmScaleFactor()) -
-                                        ((entityAudio.getRect().left / entityAudio.getmScaleFactor()) - entityAudio.getOffset_left())
+                                    (entityAudio.getRect().right / entityAudio.getscaleFactor()) -
+                                        ((entityAudio.getRect().left / entityAudio.getscaleFactor()) - entityAudio.getOffset_left())
                                 )
                                 trackViewEntity.updateWhenEffect(entityAudio)
                                 runOnUiThread {
@@ -7548,10 +7548,10 @@ private fun disableUndoBtn() {
         if (entityBismilahTimeline.getTransition() == null) {
             entityBismilahTimeline.setTransition(Transition())
         }
-        entityBismilahTimeline.getTransition()!!.setOut(entityBismilahTimeline2.getTransition().isOut())
+        entityBismilahTimeline.getTransition()!!.setOut(entityBismilahTimeline2.getTransition().isOut()
         entityBismilahTimeline.getTransition()!!.setType_out(entityBismilahTimeline2.getTransition().getType_out())
         entityBismilahTimeline.getTransition()!!.setDuration_out(entityBismilahTimeline2.getTransition().getDuration_out())
-        entityBismilahTimeline.getTransition()!!.setIn(entityBismilahTimeline2.getTransition().isIn())
+        entityBismilahTimeline.getTransition()!!.setIn(entityBismilahTimeline2.getTransition().isIn()
         entityBismilahTimeline.getTransition()!!.setType_in(entityBismilahTimeline2.getTransition().getType_in())
         entityBismilahTimeline.getTransition()!!.setDuration_in(entityBismilahTimeline2.getTransition().getDuration_in())
     }
@@ -7566,10 +7566,10 @@ private fun disableUndoBtn() {
         if (entityBismilahTimeline.getTransition() == null) {
             entityBismilahTimeline.setTransition(Transition())
         }
-        entityBismilahTimeline.getTransition()!!.setOut(entityQuranTimeline.getTransition().isOut())
+        entityBismilahTimeline.getTransition()!!.setOut(entityQuranTimeline.getTransition().isOut()
         entityBismilahTimeline.getTransition()!!.setType_out(entityQuranTimeline.getTransition().getType_out())
         entityBismilahTimeline.getTransition()!!.setDuration_out(entityQuranTimeline.getTransition().getDuration_out())
-        entityBismilahTimeline.getTransition()!!.setIn(entityQuranTimeline.getTransition().isIn())
+        entityBismilahTimeline.getTransition()!!.setIn(entityQuranTimeline.getTransition().isIn()
         entityBismilahTimeline.getTransition()!!.setType_in(entityQuranTimeline.getTransition().getType_in())
         entityBismilahTimeline.getTransition()!!.setDuration_in(entityQuranTimeline.getTransition().getDuration_in())
     }

@@ -44,7 +44,7 @@ class EchoEffectFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EchoEffectFragment? = null
+        @JvmStatic var instance: EchoEffectFragment? = null
 
         fun getInstance(
             iEchoCallback: EditMediaFragment.IEditMediaCallback?,

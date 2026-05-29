@@ -164,9 +164,12 @@
     <string name="thanks_hint">All features unlocked, JazakAllah khair for your gift.</string>
     <string name="choice_screen_ipod">iPod screen selection</string>
     <string name="to">To</string>
-</resources>
     <string name="language_changed">Language changed successfully</string>
-    <string name="select_language">Select Language</string>
-    <string name="choose_your_preferred_language">Choose your preferred language</string>
-    <string name="confirm">Confirm</string>
-    <string name="cancel">Cancel</string>
+
+    <string name="free_layer">Free Layer</string>
+    <string name="text">Text</string>
+    <string name="search_pixabay">Search Pixabay</string>
+    <string name="search_hint_pixabay">Search images on Pixabay</string>
+    <string name="_4_8_434_reviews_28k_users">4.8 (434 reviews, 28k users)</string>
+    <string name="msj_send_lnk">Send link</string>
+</resources>

@@ -40,7 +40,7 @@ class EnhanceVoiceFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EnhanceVoiceFragment? = null
+        @JvmStatic var instance: EnhanceVoiceFragment? = null
 
         fun getInstance(
             iEditMediaCallback: EditMediaFragment.IEditMediaCallback?,

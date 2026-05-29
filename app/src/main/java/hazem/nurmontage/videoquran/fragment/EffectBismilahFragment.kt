@@ -44,7 +44,7 @@ class EffectBismilahFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EffectBismilahFragment? = null
+        @JvmStatic var instance: EffectBismilahFragment? = null
 
         @Synchronized
         fun get(

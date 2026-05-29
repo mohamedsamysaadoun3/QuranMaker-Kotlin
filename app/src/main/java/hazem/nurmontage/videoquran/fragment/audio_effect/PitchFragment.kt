@@ -33,7 +33,7 @@ class PitchFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: PitchFragment? = null
+        @JvmStatic var instance: PitchFragment? = null
 
         fun getInstance(
             iEditMediaCallback: EditMediaFragment.IEditMediaCallback?,

@@ -40,7 +40,7 @@ class SpeedFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: SpeedFragment? = null
+        @JvmStatic var instance: SpeedFragment? = null
 
         fun getInstance(
             iEditMediaCallback: EditMediaFragment.IEditMediaCallback?,

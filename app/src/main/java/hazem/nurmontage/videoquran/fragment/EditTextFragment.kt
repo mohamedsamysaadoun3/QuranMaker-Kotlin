@@ -41,7 +41,7 @@ class EditTextFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EditTextFragment? = null
+        @JvmStatic var instance: EditTextFragment? = null
 
         fun getInstance(
             callback: IEdiTextCallback?,

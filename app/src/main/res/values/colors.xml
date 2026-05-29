@@ -16,4 +16,6 @@
     <color name="your_checked_color">#ff03dac5</color>
     <color name="your_disabled_color">#ffff0000</color>
     <color name="your_unchecked_color">#ffffffff</color>
+    <color name="light_blue_600">#ff039BE5</color>
+    <color name="light_blue_A200">#ff448AFF</color>
 </resources>

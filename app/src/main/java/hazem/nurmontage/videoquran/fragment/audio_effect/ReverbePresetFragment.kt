@@ -48,7 +48,7 @@ class ReverbePresetFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: ReverbePresetFragment? = null
+        @JvmStatic var instance: ReverbePresetFragment? = null
 
         fun getInstance(
             callback: EditMediaFragment.IEditMediaCallback?,

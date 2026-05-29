@@ -38,7 +38,7 @@ class GradientFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: GradientFragment? = null
+        @JvmStatic var instance: GradientFragment? = null
 
         fun getInstance(
             callback: EditIpadFragment.IIpadEditCallback?,

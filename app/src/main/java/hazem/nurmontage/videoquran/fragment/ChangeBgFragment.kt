@@ -35,7 +35,7 @@ class ChangeBgFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: ChangeBgFragment? = null
+        @JvmStatic var instance: ChangeBgFragment? = null
 
         fun getInstance(
             callback: IChangeBgCallback?,

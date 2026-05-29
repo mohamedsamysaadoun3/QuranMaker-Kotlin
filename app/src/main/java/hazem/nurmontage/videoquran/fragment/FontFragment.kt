@@ -33,7 +33,7 @@ class FontFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: FontFragment? = null
+        @JvmStatic var instance: FontFragment? = null
 
         fun getInstance(callback: IFontCallback?, fontName: String?, typeface: Typeface?): FontFragment {
             if (instance == null) {

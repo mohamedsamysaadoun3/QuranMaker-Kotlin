@@ -26,7 +26,7 @@ class ColorsFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: ColorsFragment? = null
+        @JvmStatic var instance: ColorsFragment? = null
 
         fun getInstance(
             callback: EditIpadFragment.IIpadEditCallback?,

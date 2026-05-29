@@ -30,7 +30,7 @@ class EditS_NameFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EditS_NameFragment? = null
+        @JvmStatic var instance: EditS_NameFragment? = null
 
         fun getInstance(
             callback: IEditS_Name?,

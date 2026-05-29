@@ -49,32 +49,32 @@ class TranslationQuranEntity : EntityView, Serializable {
     // ──────────────────────────────────────────────
     //  State fields (names preserved for serialization)
     // ──────────────────────────────────────────────
-    private var clrAya: Int = 0
-    private var index: Int = 0
-    private var ipad_type: Int = 0
-    private var isFadeIn: Boolean = false
-    private var isFadeOut: Boolean = false
-    private var isVisible: Boolean = false
-    private var mPreset: Int = 0
-    private var nameFont: String = FONT_QURAN
-    private var number: Int = 0
-    private var objectAnimator: ObjectAnimator? = null
-    private var offsetX: Float = 0f
-    private var otherAnimation: ObjectAnimator? = null
+    internal var clrAya: Int = 0
+    internal var index: Int = 0
+    internal var ipad_type: Int = 0
+    internal var isFadeIn: Boolean = false
+    internal var isFadeOut: Boolean = false
+    internal var isVisible: Boolean = false
+    internal var mPreset: Int = 0
+    internal var nameFont: String = FONT_QURAN
+    internal var number: Int = 0
+    internal var objectAnimator: ObjectAnimator? = null
+    internal var offsetX: Float = 0f
+    internal var otherAnimation: ObjectAnimator? = null
     private val paintAya: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
     private val paintAyaOutline: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
     private val paintAyaTrslOutline: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
     private val paintBg: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
-    private var spannableString: SpannableString? = null
-    private var staticLayout: StaticLayout? = null
-    private var staticLayoutOutline: StaticLayout? = null
-    private var txt: String? = null
-    private var viewWeakReference: WeakReference<TrackEntityView>? = null
-    private var viewWidth: Int = 0
-    private var weakBlurredImageView: WeakReference<BlurredImageView>? = null
-    private var clrBg: Int = ViewCompat.MEASURED_STATE_MASK
-    private var isHaveBg: Boolean = true
-    private var scaleX: Float = 1.0f
+    internal var spannableString: SpannableString? = null
+    internal var staticLayout: StaticLayout? = null
+    internal var staticLayoutOutline: StaticLayout? = null
+    internal var txt: String? = null
+    internal var viewWeakReference: WeakReference<TrackEntityView>? = null
+    internal var viewWidth: Int = 0
+    internal var weakBlurredImageView: WeakReference<BlurredImageView>? = null
+    internal var clrBg: Int = ViewCompat.MEASURED_STATE_MASK
+    internal var isHaveBg: Boolean = true
+    internal var scaleX: Float = 1.0f
 
     // ──────────────────────────────────────────────
     //  Constructors

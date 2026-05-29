@@ -28,7 +28,7 @@ class EditIconQuranFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EditIconQuranFragment? = null
+        @JvmStatic var instance: EditIconQuranFragment? = null
 
         fun getInstance(callback: IQuranIconCallback?, icon: String?): EditIconQuranFragment {
             if (instance == null) {

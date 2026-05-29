@@ -104,90 +104,91 @@ class TrackEntityView @JvmOverloads constructor(
 
     // ── Fields ────────────────────────────────────────────────────────
 
-    private var DETECT_LEFT_MOVE: Float = 0f
-    private var DETECT_RIGHT_MOVE: Float = 0f
-    private var SPEED: Float = 0f
-    private var TOLERANCE_X: Float = 0.95f
+    internal var DETECT_LEFT_MOVE: Float = 0f
+    internal var DETECT_RIGHT_MOVE: Float = 0f
+    internal var SPEED: Float = 0f
+    internal var TOLERANCE_X: Float = 0.95f
 
-    private var autoMoveRunnable: Runnable? = null
-    private var autoScrollHandler: Handler = Handler()
-    private var autoScrollRunnable: Runnable? = null
+    internal var autoMoveRunnable: Runnable? = null
+    internal var autoScrollHandler: Handler = Handler()
+    internal var autoScrollRunnable: Runnable? = null
 
     var bismilahTimeline: EntityBismilahTimeline? = null
-    private var btn_redo: ImageButton? = null
-    private var btn_undo: ImageButton? = null
-    private var canvas_top_Y: Float = 0f
-    private var centerX: Float = 0f
-    private var clr_btn_audio: Int = CLR_BTN_DEFAULT
-    private var clr_btn_quran: Int = CLR_BTN_DEFAULT
-    private var clr_btn_trsl: Int = CLR_BTN_DEFAULT
-    private var countMove: Int = 0
-    private var currentEventX: Float = 0f
-    private var currentPosition: Float = 0f
-    private var current_cursur_position: Int = 0
-    private var duration: Int = 0
-    private var dx: Float = 0f
+    internal var btn_redo: ImageButton? = null
+    internal var btn_undo: ImageButton? = null
+    internal var canvas_top_Y: Float = 0f
+    internal var centerX: Float = 0f
+    internal var clr_btn_audio: Int = CLR_BTN_DEFAULT
+    internal var clr_btn_quran: Int = CLR_BTN_DEFAULT
+    internal var clr_btn_trsl: Int = CLR_BTN_DEFAULT
+    internal var countMove: Int = 0
+    internal var currentEventX: Float = 0f
+    internal var currentPosition: Float = 0f
+    internal var current_cursur_position: Int = 0
+    internal var duration: Int = 0
+    internal var dx: Float = 0f
 
-    private var entityList: Stack<Pair<Entity, EntityAction>> = Stack()
+    internal var entityList: Stack<Pair<Entity, EntityAction>> = Stack()
     var entityListAudio: MutableList<EntityAudio> = ArrayList()
+    fun getEntityListAudio(): MutableList<EntityAudio> = entityListAudio
     val entityListQuran: MutableList<EntityQuranTimeline> = ArrayList()
     val entityListTrslQuran: MutableList<EntityTrslTimeline> = ArrayList()
 
-    private var eventX: Float = 0f
-    private var eventY: Float = 0f
+    internal var eventX: Float = 0f
+    internal var eventY: Float = 0f
     var exclusionRects: MutableList<Rect> = ArrayList()
 
-    private var gestureDetector: GestureDetectorCompat? = null
+    internal var gestureDetector: GestureDetectorCompat? = null
 
-    private var iTrimLineCallback: ITrimLineCallback? = null
+    internal var iTrimLineCallback: ITrimLineCallback? = null
     var isArabic_lang: Boolean = false
-    private var isAutoMove: Boolean = false
-    private var isAutoScroll: Boolean = false
-    private var isCheckLine: Boolean = false
-    private var isCheckLineCursur: Boolean = false
-    private var isDetectChange: Boolean = false
-    private var isFling: Boolean = false
-    private var isMove: Boolean = false
-    private var isOnUp: Boolean = false
-    private var isPassScroll: Boolean = true
+    internal var isAutoMove: Boolean = false
+    internal var isAutoScroll: Boolean = false
+    internal var isCheckLine: Boolean = false
+    internal var isCheckLineCursur: Boolean = false
+    internal var isDetectChange: Boolean = false
+    internal var isFling: Boolean = false
+    internal var isMove: Boolean = false
+    internal var isOnUp: Boolean = false
+    internal var isPassScroll: Boolean = true
     var isPlaying: Boolean = false
-    private var isProgress: Boolean = false
-    private var isScaleListener: Boolean = false
+    internal var isProgress: Boolean = false
+    internal var isScaleListener: Boolean = false
 
-    private var lasX: Float = 0f
-    private var lastDifference: Long = 0L
-    private var lastTime: Long = 0L
+    internal var lasX: Float = 0f
+    internal var lastDifference: Long = 0L
+    internal var lastTime: Long = 0L
     var mIsi3adaTimeline: EntityBismilahTimeline? = null
-    private var mScrollY: Float = 0f
-    private var m_pos_y_marker: Float = 0f
-    private var markerHeight: Float = 0f
-    private var maxBottom: Float = 0f
-    private var maxTime: Int = -1
-    private var max_trim: Float = 0f
-    private var objectAnimator: ObjectAnimator? = null
-    private var onThink: Boolean = true
-    private var p: Float = 0f
-    private var paddingCursur: Float = 0f
+    internal var mScrollY: Float = 0f
+    internal var m_pos_y_marker: Float = 0f
+    internal var markerHeight: Float = 0f
+    internal var maxBottom: Float = 0f
+    internal var maxTime: Int = -1
+    internal var max_trim: Float = 0f
+    internal var objectAnimator: ObjectAnimator? = null
+    internal var onThink: Boolean = true
+    internal var p: Float = 0f
+    internal var paddingCursur: Float = 0f
 
-    private var paintCursur: Paint? = null
+    internal var paintCursur: Paint? = null
     private val paintItem: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private var paintLineCheck: Paint? = null
-    private var paintMaker: Paint? = null
-    private var paint_time: Paint? = null
-    private var pass: Boolean = false
+    internal var paintLineCheck: Paint? = null
+    internal var paintMaker: Paint? = null
+    internal var paint_time: Paint? = null
+    internal var pass: Boolean = false
 
-    private var pathItemAudio: Path? = null
-    private var pathItemQuran: Path? = null
-    private var pathItemTrslQuran: Path? = null
-    private var posY: Float = 0f
-    private var radius: Float = 0f
+    internal var pathItemAudio: Path? = null
+    internal var pathItemQuran: Path? = null
+    internal var pathItemTrslQuran: Path? = null
+    internal var posY: Float = 0f
+    internal var radius: Float = 0f
 
-    private var rectFItemQuran: RectF? = null
-    private var rectFItemTrslQuran: RectF? = null
-    private var rectItemAudio: RectF? = null
-    private var rectSquareAudio: RectF? = null
-    private var rectSquareQuran: RectF? = null
-    private var rectSquareTrslQuran: RectF? = null
+    internal var rectFItemQuran: RectF? = null
+    internal var rectFItemTrslQuran: RectF? = null
+    internal var rectItemAudio: RectF? = null
+    internal var rectSquareAudio: RectF? = null
+    internal var rectSquareQuran: RectF? = null
+    internal var rectSquareTrslQuran: RectF? = null
 
     var scaleFactor: Float = DEFAULT_SCALE
         set(value) {
@@ -195,21 +196,21 @@ class TrackEntityView @JvmOverloads constructor(
             scrolled_with_zoom = value * currentPosition
         }
 
-    private var scaleGestureDetector: ScaleGestureDetector? = null
-    private var scrolled_with_zoom: Float = 0f
-    private var scroller: Scroller? = null
-    private var second_in_screen: Float = 0f
+    internal var scaleGestureDetector: ScaleGestureDetector? = null
+    internal var scrolled_with_zoom: Float = 0f
+    internal var scroller: Scroller? = null
+    internal var second_in_screen: Float = 0f
     var selectedEntity: Entity? = null
-    private var signeX: Float = -1f
-    private var signeY: Float = -1f
-    private var startXLine: Float = 0f
-    private var start_y_draw: Float = 0f
-    private var target: Float = 0f
-    private var timeLineW: Float = 0f
-    private var time_start: Long = 0L
-    private var undoEntityList: Stack<Pair<Entity, EntityAction>> = Stack()
-    private var w_time_item: Float = 0f
-    private var width_screen: Int = 0
+    internal var signeX: Float = -1f
+    internal var signeY: Float = -1f
+    internal var startXLine: Float = 0f
+    internal var start_y_draw: Float = 0f
+    internal var target: Float = 0f
+    internal var timeLineW: Float = 0f
+    internal var time_start: Long = 0L
+    internal var undoEntityList: Stack<Pair<Entity, EntityAction>> = Stack()
+    internal var w_time_item: Float = 0f
+    internal var width_screen: Int = 0
     var y: Float = 0f
 
     // ── Gesture listener (extracted from duplicated constructors) ─────
@@ -892,37 +893,6 @@ class TrackEntityView @JvmOverloads constructor(
                 }
             }
         } catch (e: Exception) {
-            Log.e("mException", "drawItemBtn")
-        }
-    }
-
-                val f11 = trslQuran.getRect().top
-                val width5 = canvas.width * 0.15f
-                val f12 = trslQuran.getRect().bottom
-                val rectF4 = rectFItemTrslQuran
-                if (rectF4 == null || rectF4.top != f11) {
-                    val rectF5 = RectF(0.0f, f11, width5, f12)
-                    rectFItemTrslQuran = rectF5
-                    val width6 = rectF5.width() * 0.15f
-                    val height3 = rectFItemTrslQuran!!.height() * 0.6f
-                    val f13 = width5 - width6
-                    val f14 = f13 - height3
-                    val f15 = height3 / 2.0f
-                    rectSquareTrslQuran = RectF(f14, rectFItemTrslQuran!!.centerY() - f15, f13, rectFItemTrslQuran!!.centerY() + f15)
-                    pathItemTrslQuran = CanvasUtils.drawCustomRoundedRect(canvas, 0.0f, f11, width5, f12, 100.0f, 100.0f)
-                }
-                paintItem.color = clr_btn_trsl
-                canvas.drawPath(pathItemTrslQuran!!, paintItem)
-                paintItem.color = Common.COLOR_BLOCK_TRSLATION
-                canvas.drawRoundRect(rectSquareTrslQuran!!, 2.0f, 2.0f, paintItem)
-                if (clr_btn_trsl != CLR_BTN_DEFAULT) {
-                    val drawable3 = ContextCompat.getDrawable(context, R.drawable.checked_timeline)
-                    val i3 = (rectFItemTrslQuran!!.right - rectSquareTrslQuran!!.right).toInt()
-                    drawable3?.setBounds(i3, rectSquareTrslQuran!!.top.toInt(), (i3 + rectSquareTrslQuran!!.width()).toInt(), rectSquareTrslQuran!!.bottom.toInt())
-                    drawable3?.draw(canvas)
-                }
-            }
-        } catch (_: Exception) {
             Log.e("mException", "drawItemBtn")
         }
     }

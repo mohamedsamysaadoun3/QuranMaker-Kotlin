@@ -39,7 +39,7 @@ class EditIpadFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EditIpadFragment? = null
+        @JvmStatic var instance: EditIpadFragment? = null
 
         fun getInstance(
             resources: Resources?,

@@ -28,7 +28,7 @@ class AddAudioFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: AddAudioFragment? = null
+        @JvmStatic var instance: AddAudioFragment? = null
 
         fun getInstance(callback: IAudioCallback?, resources: Resources?): AddAudioFragment {
             if (instance == null) {

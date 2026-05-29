@@ -38,7 +38,7 @@ class ColorS_NameFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: ColorS_NameFragment? = null
+        @JvmStatic var instance: ColorS_NameFragment? = null
 
         fun getInstance(
             callback: EditS_NameFragment.IEditS_Name?,

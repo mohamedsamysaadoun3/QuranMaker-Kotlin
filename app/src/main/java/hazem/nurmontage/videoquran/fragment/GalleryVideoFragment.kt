@@ -42,7 +42,7 @@ class GalleryVideoFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: GalleryVideoFragment? = null
+        @JvmStatic var instance: GalleryVideoFragment? = null
 
         @Synchronized
         fun get(

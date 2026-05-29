@@ -120,6 +120,31 @@ class Template : Serializable {
     fun setWidthAndHeight(w: Int, h: Int) { width = w; height = h }
     fun setDrawingTranslation(dx: Float, dy: Float) { mDrawingTranslationX = dx; mDrawingTranslationY = dy }
 
+    
+    // ── Java-style getters for compatibility ───────────────────────
+    fun getIpad_type(): Int = ipad_type
+    fun setIpad_type(type: Int) { ipad_type = type }
+    fun getX_square(): Float = x_square
+    fun setX_square(x: Float) { x_square = x }
+    fun getY_square(): Float = y_square
+    fun setY_square(y: Float) { y_square = y }
+    fun getWidth_square(): Float = width_square
+    fun setWidth_square(w: Float) { width_square = w }
+    fun getHeight_square(): Float = height_square
+    fun setHeight_square(h: Float) { height_square = h }
+    fun getName_drawable(): String? = name_drawable
+    fun setName_drawable(name: String?) { name_drawable = name }
+    fun getUri_bg(): String? = uri_bg
+    fun setUri_bg(uri: String?) { uri_bg = uri }
+    fun getUri_video(): String? = uri_video
+    fun setUri_video(uri: String?) { uri_video = uri }
+    fun getUri_media_video(): String? = uri_media_video
+    fun setUri_media_video(uri: String?) { uri_media_video = uri }
+    fun getColor_ipad(): Int = color_ipad
+    fun setColor_ipad(color: Int) { color_ipad = color }
+    fun getIsVideoSquare(): Boolean = isVideoSquare
+    fun setVideoSquare(square: Boolean) { isVideoSquare = square }
+
     fun geTypeResize(): Int = resizeType
 
     /** Deep-copy via serialization round-trip (same as original Java). */

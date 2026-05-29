@@ -111,84 +111,84 @@ class BlurredImageView @JvmOverloads constructor(
 
     var backgroundPaint: Paint = Paint()
         private set
-    private var bismilahEntity: BismilahEntity? = null
-    private var bitmapBlured: Bitmap? = null
-    private var bitmapNotBlur: Bitmap? = null
-    private var bitmapOriginal: Bitmap? = null
-    private var bitmapSquare: Bitmap? = null
-    private var btmX: Float = 0f
-    private var btmY: Float = 0f
-    private var clr_aya: Int = 0
-    private var clr_trsl: Int = 0
-    private var color_bg_type_classic: Int = 0
-    private var color_gradient: Gradient? = null
-    private var color_ipad: Int = 0
-    private var color_line_bg: Int = 0
-    private var currentTime: String? = null
+    internal var bismilahEntity: BismilahEntity? = null
+    var bitmapBlured: Bitmap? = null
+    internal var bitmapNotBlur: Bitmap? = null
+    var bitmapOriginal: Bitmap? = null
+    internal var bitmapSquare: Bitmap? = null
+    internal var btmX: Float = 0f
+    internal var btmY: Float = 0f
+    internal var clr_aya: Int = 0
+    internal var clr_trsl: Int = 0
+    internal var color_bg_type_classic: Int = 0
+    internal var color_gradient: Gradient? = null
+    internal var color_ipad: Int = 0
+    internal var color_line_bg: Int = 0
+    internal var currentTime: String? = null
     var darkShadowPaint: Paint = Paint()
         private set
-    private var entity_select: EntityView? = null
-    private var frameInterval: Long = 0L
-    private var gestureDetector: GestureDetectorCompat? = null
-    private var grayscalePaint: Paint = Paint()
-    private var iViewCallback: IViewCallback? = null
-    private var ipad_rect: RectF? = null
-    private var isAnimWatermk: Boolean = false
-    private var isDrawingSquareVideo: Boolean = false
-    private var isGlass: Boolean = false
-    private var isNotDraw: Boolean = false
-    private var isOnScale: Boolean = false
-    private var isPlaying: Boolean = false
-    private var isPro: Boolean = false
-    private var isRemoveWattermark: Boolean = false
-    private var isSquare: Boolean = false
-    private var isVideo: Boolean = false
-    private var isWattermark: Boolean = false
-    private var left_square: Float = 0f
+    internal var entity_select: EntityView? = null
+    internal var frameInterval: Long = 0L
+    internal var gestureDetector: GestureDetectorCompat? = null
+    internal var grayscalePaint: Paint = Paint()
+    internal var iViewCallback: IViewCallback? = null
+    internal var ipad_rect: RectF? = null
+    internal var isAnimWatermk: Boolean = false
+    internal var isDrawingSquareVideo: Boolean = false
+    internal var isGlass: Boolean = false
+    internal var isNotDraw: Boolean = false
+    internal var isOnScale: Boolean = false
+    internal var isPlaying: Boolean = false
+    internal var isPro: Boolean = false
+    internal var isRemoveWattermark: Boolean = false
+    internal var isSquare: Boolean = false
+    internal var isVideo: Boolean = false
+    internal var isWattermark: Boolean = false
+    internal var left_square: Float = 0f
     var lightShadowPaint: Paint = Paint()
         private set
-    private var linePaint: Paint = Paint()
-    private var linearGradient_classic: LinearGradient? = null
-    private var mCanvas_height: Int = 0
-    private var mCanvas_width: Int = 0
-    private var mDrawingTranslationX: Float = 0f
-    private var mDrawingTranslationY: Float = 0f
-    private var mIpadType: Int = 0
-    private var mIsti3adhaEntity: BismilahEntity? = null
-    private var mRectWattermark: RectF? = null
-    private var mResizetype: Int = 0
-    private var moveGestureDetector: MoveGestureDetector? = null
-    private var newLeft_txt: Float = 0f
-    private var paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private var paintClear: Paint = Paint()
-    private var paintIpad: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private var paintLecture: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private var paintText: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
-    private var paintWattermark: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private var prevDistance: Float = 0f
-    private var progress: Float = 0f
+    internal var linePaint: Paint = Paint()
+    internal var linearGradient_classic: LinearGradient? = null
+    internal var mCanvas_height: Int = 0
+    internal var mCanvas_width: Int = 0
+    internal var mDrawingTranslationX: Float = 0f
+    internal var mDrawingTranslationY: Float = 0f
+    internal var mIpadType: Int = 0
+    internal var mIsti3adhaEntity: BismilahEntity? = null
+    internal var mRectWattermark: RectF? = null
+    internal var mResizetype: Int = 0
+    internal var moveGestureDetector: MoveGestureDetector? = null
+    internal var newLeft_txt: Float = 0f
+    internal var paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    internal var paintClear: Paint = Paint()
+    internal var paintIpad: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    internal var paintLecture: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    internal var paintText: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
+    internal var paintWattermark: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    internal var prevDistance: Float = 0f
+    internal var progress: Float = 0f
     private val quranEntities: MutableList<QuranEntity> = ArrayList()
-    private var radius_cursur: Float = 0f
-    private var radius_square: Int = 0
-    private var rectFAya: RectF? = null
-    private var rectFLecture: RectF? = null
-    private var rectFProgress: RectF? = null
-    private var rectFSurahName: RectF? = null
-    private var rectSquare: Rect? = null
-    private var remainingTime: String? = null
-    private var scaleGestureDetector: ScaleGestureDetector? = null
-    private var scheme: ColorSchemeGenerator.Scheme? = null
-    private var selectTool: EntitySelectTool? = null
-    private var showCenterLineX: Boolean = false
-    private var showCenterLineY: Boolean = false
-    private var startTime: Long = 0L
-    private var surahNameEntity: SurahNameEntity? = null
-    private var top_square: Float = 0f
+    internal var radius_cursur: Float = 0f
+    internal var radius_square: Int = 0
+    internal var rectFAya: RectF? = null
+    internal var rectFLecture: RectF? = null
+    internal var rectFProgress: RectF? = null
+    internal var rectFSurahName: RectF? = null
+    internal var rectSquare: Rect? = null
+    internal var remainingTime: String? = null
+    internal var scaleGestureDetector: ScaleGestureDetector? = null
+    internal var scheme: ColorSchemeGenerator.Scheme? = null
+    internal var selectTool: EntitySelectTool? = null
+    internal var showCenterLineX: Boolean = false
+    internal var showCenterLineY: Boolean = false
+    internal var startTime: Long = 0L
+    var surahNameEntity: SurahNameEntity? = null
+    internal var top_square: Float = 0f
     private val translationEntities: MutableList<TranslationQuranEntity> = ArrayList()
-    private var txt_y: Float = 0f
-    private var wmAlpha: Float = 0f
-    private var wmScale: Float = 0f
-    private var wmTranslateY: Float = 0f
+    internal var txt_y: Float = 0f
+    internal var wmAlpha: Float = 0f
+    internal var wmScale: Float = 0f
+    internal var wmTranslateY: Float = 0f
 
     // ═══════════════════════════════════════════════════════════════════
     //  Gesture listener (defined once, used by all constructors)
@@ -270,6 +270,7 @@ class BlurredImageView @JvmOverloads constructor(
     }
 
     fun getColor_ipad(): Int = this.color_ipad
+    fun setColor_ipad(color: Int) { setColorIpad(color) }
     fun setResizetype(i: Int) { this.mResizetype = i }
     fun getmIpadType(): Int = this.mIpadType
     fun setIpad_rect(rectF: RectF?) { this.ipad_rect = rectF }
@@ -2010,6 +2011,33 @@ class BlurredImageView @JvmOverloads constructor(
     //  SurahNameEntity helpers
     // ═══════════════════════════════════════════════════════════════════
 
+    
+    fun setSurahNameEntity(
+        name: String,
+        readerName: String,
+        bitmap: Any?,
+        scale: Float,
+        fontPath: String,
+        clrAya: Int,
+        preset: Int,
+        style: Int,
+        indexSurah: Int,
+        haveBg: Boolean,
+        clrBg: Int
+    ) {
+        val entity = surahNameEntity
+        if (entity != null) {
+            entity.setName(name)
+            entity.setReaderName(readerName)
+            entity.setClrBg(clrBg)
+            entity.setHaveBg(haveBg)
+            entity.setIndex_surah(indexSurah)
+        } else {
+            surahNameEntity = SurahNameEntity(name, readerName, clrAya)
+        }
+        invalidate()
+    }
+
     fun getSurahNameEntity(): SurahNameEntity? = surahNameEntity
 
     fun updateAlignmentSurah(alignment: Layout.Alignment) {
@@ -2418,6 +2446,7 @@ class BlurredImageView @JvmOverloads constructor(
     // ═══════════════════════════════════════════════════════════════════
 
     fun getRadius_square(): Int = radius_square
+    fun getRectSquare(): Rect? = rectSquare
     fun setRadius_square(radius: Int) { this.radius_square = radius }
     fun setBitmapBlured(bitmap: Bitmap?) { this.bitmapBlured = bitmap }
     fun setBitmapSquare(bitmap: Bitmap?) { this.bitmapSquare = bitmap }

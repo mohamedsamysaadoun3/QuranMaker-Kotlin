@@ -37,7 +37,7 @@ class EditTrslEntityFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: EditTrslEntityFragment? = null
+        @JvmStatic var instance: EditTrslEntityFragment? = null
 
         fun getInstance(
             callback: IEditEntityCallback?,

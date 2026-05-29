@@ -36,7 +36,7 @@ class RemoveNoiceFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: RemoveNoiceFragment? = null
+        @JvmStatic var instance: RemoveNoiceFragment? = null
 
         fun getInstance(
             iEditMediaCallback: EditMediaFragment.IEditMediaCallback?,

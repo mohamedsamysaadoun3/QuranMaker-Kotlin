@@ -15,4 +15,10 @@
     
     <!-- General dimensions -->
     <dimen name="fab_margin">16dp</dimen>
+    
+    <!-- Tablet dimensions -->
+    <dimen name="menu_size_tablet">56dp</dimen>
+    <dimen name="menu_item_margin_tablet">4dp</dimen>
+    <dimen name="menu_text_size_tablet">10sp</dimen>
+    <dimen name="margin_item_menu_tabelet">6dp</dimen>
 </resources>

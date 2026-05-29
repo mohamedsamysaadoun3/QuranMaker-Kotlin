@@ -37,28 +37,28 @@ class BismilahEntity : EntityView, Serializable {
     // ──────────────────────────────────────────────
     //  State
     // ──────────────────────────────────────────────
-    private var bismilahTimeline: EntityBismilahTimeline? = null
-    private var clrAya: Int = 0
-    private var index: Int = 0
-    private var ipadType: Int = 0
-    private var isFadeIn: Boolean = false
-    private var isFadeOut: Boolean = false
-    private var isVisible: Boolean = false
-    private var mPreset: Int = 0
-    private var objectAnimator: ObjectAnimator? = null
-    private var offsetX: Float = 0f
-    private var otherAnimation: ObjectAnimator? = null
+    internal var bismilahTimeline: EntityBismilahTimeline? = null
+    internal var clrAya: Int = 0
+    internal var index: Int = 0
+    internal var ipadType: Int = 0
+    internal var isFadeIn: Boolean = false
+    internal var isFadeOut: Boolean = false
+    internal var isVisible: Boolean = false
+    internal var mPreset: Int = 0
+    internal var objectAnimator: ObjectAnimator? = null
+    internal var offsetX: Float = 0f
+    internal var otherAnimation: ObjectAnimator? = null
     private val paintAya: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
     private val paintAyaOutline: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
-    private var staticLayout: StaticLayout? = null
-    private var staticLayoutOutline: StaticLayout? = null
-    private var txt: String = ""
-    private var viewWeakReference: WeakReference<TrackEntityView>? = null
-    private var viewWidth: Int = 0
-    private var weakBlurredImageView: WeakReference<BlurredImageView>? = null
-    private var xTranslation: Float = 0f
-    private var scaleX: Float = 1.0f
-    private var nameFont: String = Constants.FONT_QURAN
+    internal var staticLayout: StaticLayout? = null
+    internal var staticLayoutOutline: StaticLayout? = null
+    internal var txt: String = ""
+    internal var viewWeakReference: WeakReference<TrackEntityView>? = null
+    internal var viewWidth: Int = 0
+    internal var weakBlurredImageView: WeakReference<BlurredImageView>? = null
+    internal var xTranslation: Float = 0f
+    internal var scaleX: Float = 1.0f
+    internal var nameFont: String = Constants.FONT_QURAN
 
     // ──────────────────────────────────────────────
     //  Constructors

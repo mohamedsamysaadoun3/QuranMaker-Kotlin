@@ -37,7 +37,7 @@ class VolumeFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: VolumeFragment? = null
+        @JvmStatic var instance: VolumeFragment? = null
 
         fun getInstance(
             iEditMediaCallback: EditMediaFragment.IEditMediaCallback?,

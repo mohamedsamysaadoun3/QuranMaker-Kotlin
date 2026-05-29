@@ -53,44 +53,44 @@ class QuranEntity : EntityView, Serializable {
     // ──────────────────────────────────────────────
     //  State fields (names preserved for serialization)
     // ──────────────────────────────────────────────
-    private var clrAya: Int = 0
-    private var clrTrsl: Int = 0
-    private var complete_aya: String? = null
-    private var endWord_index: Int = 0
-    private var icon: String? = null
-    private var index: Int = 0
-    private var indexNumber: Int = 0
-    private var ipad_type: Int = 0
-    private var isFadeIn: Boolean = false
-    private var isFadeOut: Boolean = false
-    private var isVisible: Boolean = false
-    private var mPreset: Int = 0
-    private var nameFont: String = FONT_QURAN
-    private var number: Int = 0
-    private var objectAnimator: ObjectAnimator? = null
-    private var offsetX: Float = 0f
-    private var otherAnimation: ObjectAnimator? = null
+    internal var clrAya: Int = 0
+    internal var clrTrsl: Int = 0
+    internal var complete_aya: String? = null
+    internal var endWord_index: Int = 0
+    internal var icon: String? = null
+    internal var index: Int = 0
+    internal var indexNumber: Int = 0
+    internal var ipad_type: Int = 0
+    internal var isFadeIn: Boolean = false
+    internal var isFadeOut: Boolean = false
+    internal var isVisible: Boolean = false
+    internal var mPreset: Int = 0
+    internal var nameFont: String = FONT_QURAN
+    internal var number: Int = 0
+    internal var objectAnimator: ObjectAnimator? = null
+    internal var offsetX: Float = 0f
+    internal var otherAnimation: ObjectAnimator? = null
     private val paintAya: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
     private val paintAyaOutline: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
     private val paintAyaTrslOutline: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
     private val paintTranslationAya: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
-    private var spannableString: SpannableString? = null
-    private var startWord_index: Int = 0
-    private var staticLayout: StaticLayout? = null
-    private var staticLayoutOutline: StaticLayout? = null
-    private var staticLayoutTranslation: StaticLayout? = null
-    private var staticLayoutTranslationOutline: StaticLayout? = null
-    private var translation: String? = null
-    private var translation_complete: String? = null
-    private var txt: String? = null
+    internal var spannableString: SpannableString? = null
+    internal var startWord_index: Int = 0
+    internal var staticLayout: StaticLayout? = null
+    internal var staticLayoutOutline: StaticLayout? = null
+    internal var staticLayoutTranslation: StaticLayout? = null
+    internal var staticLayoutTranslationOutline: StaticLayout? = null
+    internal var translation: String? = null
+    internal var translation_complete: String? = null
+    internal var txt: String? = null
     private val typefaceNumber: Typeface?
-    private var vectorDrawable: VectorDrawable? = null
-    private var viewWeakReference: WeakReference<TrackEntityView>? = null
-    private var viewWidth: Int = 0
-    private var weakBlurredImageView: WeakReference<BlurredImageView>? = null
-    private var x_translation: Float = 0f
-    private var padding: Float = 1.0f
-    private var scaleX: Float = 1.0f
+    internal var vectorDrawable: VectorDrawable? = null
+    internal var viewWeakReference: WeakReference<TrackEntityView>? = null
+    internal var viewWidth: Int = 0
+    internal var weakBlurredImageView: WeakReference<BlurredImageView>? = null
+    internal var x_translation: Float = 0f
+    internal var padding: Float = 1.0f
+    internal var scaleX: Float = 1.0f
 
     // ──────────────────────────────────────────────
     //  Preset accessors

@@ -44,7 +44,7 @@ class FadeInOutFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: FadeInOutFragment? = null
+        @JvmStatic var instance: FadeInOutFragment? = null
 
         fun getInstance(
             iEditMediaCallback: EditMediaFragment.IEditMediaCallback?,

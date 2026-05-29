@@ -26,22 +26,22 @@ abstract class Entity(secondInScreen: Float) {
     //  Protected state (shared with subclasses)
     // ══════════════════════════════════════════════
 
-    protected var rect: RectF = RectF()
+    var rect: RectF = RectF()
     protected var rectFLeft: RectF = RectF()
     protected var rectFRight: RectF = RectF()
     protected var selectTrim: RectF? = null
-    protected var trimType: Int = -1
-    protected var color: Int = 0
-    protected var end: Float = 0f
-    protected var left: Float = 0f
-    protected var right: Float = 0f
-    protected var max: Float = 0f
-    protected var start: Float = 0f
-    protected var secondInScreen: Float = secondInScreen
-    protected var padding: Float = 0f
-    protected var round: Float = 0f
-    protected var isSelect: Boolean = false
-    protected var isVisible: Boolean = true
+    var trimType: Int = -1
+    var color: Int = 0
+    var end: Float = 0f
+    var left: Float = 0f
+    var right: Float = 0f
+    var max: Float = 0f
+    var start: Float = 0f
+    var secondInScreen: Float = secondInScreen
+    var padding: Float = 0f
+    var round: Float = 0f
+    var isSelect: Boolean = false
+    var isVisible: Boolean = true
     protected var indexStartThumbnail: Int = 0
     protected var indexEndThumbnail: Int = 0
 

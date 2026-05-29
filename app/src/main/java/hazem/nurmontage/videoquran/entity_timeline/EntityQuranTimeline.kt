@@ -22,7 +22,7 @@ import hazem.nurmontage.videoquran.model.data.QuranEntity
  * Originally: `hazem.nurmontage.videoquran.entity_timeline.EntityQuranTimeline`
  */
 class EntityQuranTimeline(
-    private val quranEntity: QuranEntity,
+    val quranEntity: QuranEntity,
     left: Float,
     top: Float,
     height: Float,
@@ -33,15 +33,15 @@ class EntityQuranTimeline(
     // ──────────────────────────────────────────────
     //  Private state
     // ──────────────────────────────────────────────
-    private var h: Float = height
-    private var centerY: Float = 0f
-    private var downX: Float = 0f
-    private var lastLeft: Float = 0f
-    private var lastRight: Float = 0f
-    private var transition: Transition? = null
-    private var file: String? = null
-    private var file_in: String? = null
-    private var file_out: String? = null
+    internal var h: Float = height
+    internal var centerY: Float = 0f
+    internal var downX: Float = 0f
+    internal var lastLeft: Float = 0f
+    internal var lastRight: Float = 0f
+    internal var transition: Transition? = null
+    internal var file: String? = null
+    internal var file_in: String? = null
+    internal var file_out: String? = null
 
     private val paintText: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val textBound: Rect = Rect()

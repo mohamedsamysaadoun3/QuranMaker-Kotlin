@@ -36,7 +36,7 @@ class ColorBismilahFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: ColorBismilahFragment? = null
+        @JvmStatic var instance: ColorBismilahFragment? = null
 
         fun getInstance(
             callback: IBismilahEntityCallback?,

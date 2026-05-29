@@ -53,7 +53,7 @@ class AddQuranFragment : Fragment {
 
     companion object {
         @Volatile
-        private var instance: AddQuranFragment? = null
+        @JvmStatic var instance: AddQuranFragment? = null
 
         fun getInstance(
             iAddQuran: IAddQuran?,

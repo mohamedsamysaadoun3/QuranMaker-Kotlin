@@ -17,6 +17,7 @@ import hazem.nurmontage.videoquran.model.Gradient
  * Originally: `hazem.nurmontage.videoquran.common.Common`
  */
 object Common {
+    const val READER = "reader"
 
     // ──────────────────────────────────────────────
     //  Constant aliases (delegate to Constants for
