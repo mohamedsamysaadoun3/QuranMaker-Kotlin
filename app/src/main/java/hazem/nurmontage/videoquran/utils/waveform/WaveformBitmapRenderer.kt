@@ -10,18 +10,24 @@ import android.graphics.RectF
  * Pre-renders an audio waveform into a [Bitmap] and draws it on a [Canvas]
  * with horizontal scaling and translation for smooth timeline scrolling.
  *
+ * Also supports drawing a highlight overlay on a portion of the waveform
+ * (e.g., the played portion of the audio clip) via [drawOverlay].
+ *
  * Rendering pipeline:
  * 1. **Constructor** receives the amplitude array and allocates a bitmap.
  * 2. [generateBitmap] draws vertical lines proportional to each amplitude value.
  *    The peak amplitude is normalized so the tallest bar fills 85% of the height.
  * 3. [draw] renders the bitmap onto the given canvas using a [Matrix] that applies
  *    horizontal scaling (zoom) and translation (scroll offset).
- * 4. [release] recycles the bitmap to free native memory.
+ * 4. [drawOverlay] renders a colored highlight overlay on the played portion
+ *    of the waveform, from the start of the rect up to the position [f].
+ * 5. [release] recycles the bitmap to free native memory.
  *
  * **Performance note**: The bitmap is generated once in the constructor and
  * reused for every frame. Only [setColor] triggers regeneration.
  *
- * Converted from WaveformBitmapRenderer.java — logic preserved exactly.
+ * Converted from WaveformBitmapRenderer.java — logic preserved exactly,
+ * with drawOverlay implemented for real-time playback highlighting.
  */
 class WaveformBitmapRenderer(
     private val amps: FloatArray?,
@@ -101,10 +107,54 @@ class WaveformBitmapRenderer(
     }
 
     /**
-     * Stub for overlay rendering (reserved for future use).
+     * Draw a highlight overlay on the waveform to indicate the current
+     * playback position.
+     *
+     * Renders vertical bars using the provided [paint] for the highlighted
+     * portion of the waveform — from the start of [rect] up to progress
+     * position [f] (0.0–1.0). This provides visual feedback during audio
+     * playback where the played portion appears brighter while the unplayed
+     * portion remains dimmed.
+     *
+     * @param canvas  The target canvas
+     * @param rect    The bounding rectangle of the audio entity on the timeline
+     * @param f       Playback progress as a fraction (0.0 to 1.0)
+     * @param f2      Horizontal scroll offset (same as offset in [draw])
+     * @param paint   The paint to use for the overlay bars (typically brighter color)
      */
     fun drawOverlay(canvas: Canvas, rect: RectF, f: Float, f2: Float, paint: Paint) {
-        // No-op in original
+        val amplitudes = amps ?: return
+        if (amplitudes.isEmpty()) return
+
+        val progress = f.coerceIn(0f, 1f)
+        val barCount = (bitmapWidth * progress).toInt().coerceIn(0, bitmapWidth)
+        if (barCount <= 0) return
+
+        var peak = 0f
+        for (amp in amplitudes) {
+            if (amp > peak) peak = amp
+        }
+        val normalizer = if (peak < 0.01f) 0.01f else peak
+        val usableHeight = rect.height() * 0.85f
+
+        val scaleX = rect.width() / bitmapWidth
+        val translateX = rect.left - (f2 * scaleX)
+
+        for (x in 0 until barCount) {
+            var index = (x.toFloat() / bitmapWidth * amplitudes.size).toInt()
+            if (index >= amplitudes.size) {
+                index = amplitudes.size - 1
+            }
+            val barHeight = (amplitudes[index] / normalizer) * usableHeight
+            val drawX = translateX + x * scaleX
+            canvas.drawLine(
+                drawX,
+                rect.top + rect.height(),
+                drawX,
+                rect.top + rect.height() - barHeight,
+                paint
+            )
+        }
     }
 
     /**
@@ -122,7 +172,7 @@ class WaveformBitmapRenderer(
 
     /**
      * Recycle the bitmap to free native memory.
-     * Must be called when the parent [EntityAudio] is released.
+     * Must be called when the parent EntityAudio is released.
      */
     fun release() {
         waveformBitmap?.let {

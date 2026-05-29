@@ -1,58 +1,107 @@
 package hazem.nurmontage.videoquran.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import hazem.nurmontage.videoquran.databinding.RowWorkUserBinding
-import hazem.nurmontage.videoquran.ui.home.WorkUserActivity.ProjectItem
-import java.io.File
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.signature.ObjectKey
+import hazem.nurmontage.videoquran.R
+import hazem.nurmontage.videoquran.model.Template
 
 /**
- * RecyclerView adapter for the Home screen's saved projects list.
+ * RecyclerView adapter for displaying saved project templates with video thumbnails.
  *
- * Uses ViewBinding ([RowWorkUserBinding]) and Glide for video thumbnail loading.
- * Clean version — no billing, no premium checks.
+ * Converted from WorkUserAdabter.java — preserves all original logic including
+ * Glide thumbnail loading with frame extraction, menu callback, and item manipulation.
  */
 class WorkUserAdapter(
-    private val items: List<ProjectItem>,
-    private val onItemClick: (ProjectItem) -> Unit
+    private val appVersion: String,
+    private val images: List<Template>,
+    val iWorkUserCallback: IWorkUserCallback?,
+    private val w: Int,
+    private val h: Int
 ) : RecyclerView.Adapter<WorkUserAdapter.ViewHolder>() {
 
-    inner class ViewHolder(private val binding: RowWorkUserBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+    interface IWorkUserCallback {
+        fun onClick(template: Template)
+        fun toMenu(template: Template, view: View, position: Int)
+    }
 
-        fun bind(item: ProjectItem) {
-            binding.tvName.text = item.name
-            binding.tvDate.text = "${item.date}  •  ${item.size}"
-
-            // Load video thumbnail with Glide
-            val videoFile = File(item.path)
-            if (videoFile.exists()) {
-                Glide.with(binding.root.context)
-                    .load(videoFile)
-                    .centerCrop()
-                    .into(binding.imageView)
+    fun remove(position: Int) {
+        try {
+            if (position < images.size) {
+                (images as MutableList).removeAt(position)
             }
+            notifyItemRemoved(position)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
-            binding.root.setOnClickListener {
-                onItemClick(item)
+    fun add(position: Int, template: Template) {
+        try {
+            if (position < images.size) {
+                (images as MutableList).add(position, template)
+            } else {
+                (images as MutableList).add(template)
+            }
+            notifyItemInserted(position)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val imageView: ImageView = itemView.findViewById(R.id.imageView)
+        val btnMenu: ImageButton = itemView.findViewById(R.id.btn_menu)
+        val ivRatio: ImageView = itemView.findViewById(R.id.iv_ratio)
+        val tvName: TextView = itemView.findViewById(R.id.tv_name)
+        val tvDate: TextView = itemView.findViewById(R.id.tv_date)
+
+        init {
+            btnMenu.setOnClickListener {
+                val pos = adapterPosition
+                if (iWorkUserCallback != null && pos != RecyclerView.NO_POSITION) {
+                    iWorkUserCallback.toMenu(images[pos], it, pos)
+                }
+            }
+            itemView.setOnClickListener {
+                val pos = adapterPosition
+                if (iWorkUserCallback != null && pos != RecyclerView.NO_POSITION) {
+                    iWorkUserCallback.onClick(images[pos])
+                }
             }
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = RowWorkUserBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-        return ViewHolder(binding)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.row_work_user, parent, false)
+        return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(items[position])
+        val template = images[position]
+        if (template.fileInfo != null) {
+            holder.tvName.text = template.fileInfo.formattedDate
+            holder.tvDate.text = template.fileInfo.timedDate
+        }
+        Glide.with(holder.imageView)
+            .asBitmap()
+            .load(template.uri_video)
+            .frame(1000000L)
+            .centerInside()
+            .override(w, h)
+            .diskCacheStrategy(DiskCacheStrategy.NONE)
+            .signature(ObjectKey(appVersion))
+            .placeholder(R.drawable.broken_image_24px)
+            .into(holder.imageView)
     }
 
-    override fun getItemCount(): Int = items.size
+    override fun getItemCount(): Int = images.size
 }

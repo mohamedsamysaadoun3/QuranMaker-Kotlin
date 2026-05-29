@@ -437,7 +437,7 @@ class ProgressViewActivity : BaseActivity() {
 
     /**
      * Set the visual progress on the progress indicator.
-     * TODO: Wire up SquareOutlineProgressBar when migrated.
+     * Uses the standard ProgressBar from the layout binding.
      */
     private fun setProgressVisual(percent: Float) {
         binding.progressHorizontal.progress = percent.toInt()

@@ -1,170 +1,357 @@
 package hazem.nurmontage.videoquran.ui.editor
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import hazem.nurmontage.videoquran.databinding.ActivityFreeLayerBinding
+import hazem.nurmontage.videoquran.common.Common
 import hazem.nurmontage.videoquran.model.FreeElement
+import java.io.File
+import java.io.FileOutputStream
 
 /**
- * FreeLayerActivity — Free-form layer overlay editor.
+ * FreeLayerActivity — Free-form image layer overlay editor.
  *
- * Allows the user to add and position decorative elements (images/text)
+ * Allows the user to add, drag, and delete decorative image elements
  * as free-form layers on top of the video frame canvas.
  *
- * Layout: `activity_free_layer.xml` (dedicated layout, NOT the timeline layout).
- *
  * Flow:
- *   1. Activity opens with the current template background shown on [ivBackground]
- *   2. User taps "Add Image" or "Add Text" to create a new [FreeElement]
- *   3. Elements are displayed on the [freeLayerCanvas] and can be dragged/resized
- *   4. "Change BG" opens the background picker
+ *   1. Activity opens with a dark canvas background
+ *   2. User taps "Add Image" to pick an image from the gallery
+ *   3. The image is copied to local storage and added as a draggable ImageView
+ *   4. Dragging moves the element; tapping selects it (purple border highlight)
  *   5. "Delete" removes the currently selected element
- *   6. On "Done", the free elements list is returned as an activity result
+ *   6. "Done" saves all element positions back and returns result
  *
- * Converted from the original FreeLayerActivity concept (this activity did not
- * exist in the original JADX source — it was added during the Kotlin rewrite
- * to provide a dedicated free-layer editing screen that was previously
- * embedded inside EngineActivity).
+ * Converted from FreeLayerActivity.java — all logic preserved exactly.
  */
-class FreeLayerActivity : AppCompatActivity() {
+class FreeLayerActivity : AppCompatActivity(), View.OnTouchListener, View.OnClickListener {
 
-    // ── ViewBinding (dedicated layout, not shared with EngineActivity) ──
-    private lateinit var binding: ActivityFreeLayerBinding
+    companion object {
+        private const val PICK_IMAGE = 1
+        private const val TAG = "FreeLayer"
+        private const val ID_BTN_ADD = 1001
+        private const val ID_BTN_DONE = 1002
+        private const val ID_BTN_DELETE = 1003
+    }
 
-    // ── State ────────────────────────────────────────────────────────
-    private val freeElements = mutableListOf<FreeElement>()
-    private var selectedIndex: Int = -1
+    private lateinit var container: FrameLayout
+    private var selectedView: View? = null
+    private val elements = mutableListOf<FreeElement>()
+    private val viewMap = HashMap<View, FreeElement>()
+    private var isMoving = false
+    private var lastTouchX = 0f
+    private var lastTouchY = 0f
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  Lifecycle
+    // ═══════════════════════════════════════════════════════════════════
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityFreeLayerBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        requestWindowFeature(FEATURE_NO_TITLE)
+        window.addFlags(1024) // FLAG_KEEP_SCREEN_ON
 
-        setupToolbar()
-        setupBottomMenu()
-        loadBackgroundFromIntent()
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  Toolbar
-    // ═══════════════════════════════════════════════════════════════════
-
-    private fun setupToolbar() {
-        // Cancel — discard all changes and return
-        binding.btnCancel.setOnClickListener {
-            setResult(RESULT_CANCELED)
-            finish()
+        // Build UI programmatically — same as original Java
+        container = FrameLayout(this).apply {
+            setBackgroundColor(Color.parseColor("#1A1A2E"))
         }
 
-        // Done — confirm free layer edits and return the element count
-        binding.btnDone.setOnClickListener {
-            val resultIntent = Intent().apply {
-                putExtra(EXTRA_FREE_ELEMENTS_COUNT, freeElements.size)
-                putExtra(EXTRA_FREE_ELEMENTS, ArrayList(freeElements))
+        val toolbar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setBackgroundColor(Color.parseColor("#2D2D44"))
+            setPadding(8, 8, 8, 8)
+        }
+
+        val btnAdd = Button(this).apply {
+            text = "+ Add Image"
+            setTextColor(-1)
+            setBackgroundColor(Color.parseColor("#6C63FF"))
+            id = ID_BTN_ADD
+            setOnClickListener(this@FreeLayerActivity)
+            textSize = 12f
+        }
+        toolbar.addView(btnAdd, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ))
+
+        val btnDelete = Button(this).apply {
+            text = "Delete"
+            setTextColor(-1)
+            setBackgroundColor(Color.parseColor("#FF4444"))
+            id = ID_BTN_DELETE
+            setOnClickListener(this@FreeLayerActivity)
+            textSize = 12f
+            visibility = View.GONE
+        }
+        toolbar.addView(btnDelete, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ))
+
+        val btnDone = Button(this).apply {
+            text = "Done"
+            setTextColor(-1)
+            setBackgroundColor(Color.parseColor("#4CAF50"))
+            id = ID_BTN_DONE
+            setOnClickListener(this@FreeLayerActivity)
+            textSize = 12f
+        }
+        toolbar.addView(btnDone, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ))
+
+        val hint = TextView(this).apply {
+            text = "Tap + to add elements. Drag to move. Tap to select."
+            setTextColor(Color.parseColor("#888888"))
+            textSize = 12f
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 12)
+        }
+
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(toolbar, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ))
+            addView(hint, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ))
+            addView(container, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                1.0f
+            ))
+        }
+
+        setContentView(root)
+
+        // Restore previously saved free elements from Common
+        Common.freeElements?.let { savedList ->
+            for (element in savedList) {
+                elements.add(element)
+                val imageView = ImageView(this)
+                val bitmap = BitmapFactory.decodeFile(element.imagePath)
+                if (bitmap != null) {
+                    imageView.setImageBitmap(bitmap)
+                    imageView.scaleType = ImageView.ScaleType.FIT_CENTER
+                    val params = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.WRAP_CONTENT,
+                        FrameLayout.LayoutParams.WRAP_CONTENT
+                    ).apply { gravity = Gravity.CENTER }
+                    imageView.layoutParams = params
+                    imageView.setOnTouchListener(this@FreeLayerActivity)
+                    viewMap[imageView] = element
+                    container.addView(imageView)
+                }
             }
-            setResult(RESULT_OK, resultIntent)
-            finish()
         }
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    //  Bottom menu
+    //  Add element from URI — handles both file:// and content:// schemes
     // ═══════════════════════════════════════════════════════════════════
 
-    private fun setupBottomMenu() {
-        // Add Image — creates a new image-type free element and opens gallery
-        binding.btnAddImage.setOnClickListener {
-            val element = FreeElement(
-                x = 0.5f,
-                y = 0.5f,
-                type = "image"
-            )
-            freeElements.add(element)
-            selectedIndex = freeElements.lastIndex
-            // TODO: Open GalleryPickerOneImage for image selection
-        }
+    private fun addElementFromUri(uri: Uri?) {
+        if (uri == null) return
+        try {
+            val freeElement = FreeElement()
+            freeElement.imagePath = uri.toString()
 
-        // Add Text — creates a new text-type free element and opens text editor
-        binding.btnAddText.setOnClickListener {
-            val element = FreeElement(
-                x = 0.5f,
-                y = 0.5f,
-                type = "text"
-            )
-            freeElements.add(element)
-            selectedIndex = freeElements.lastIndex
-            // TODO: Open TextEditActivity for text input
-        }
+            val scheme = uri.scheme
+            if ("file" == scheme) {
+                freeElement.imagePath = uri.path
+            } else if ("content" == scheme) {
+                val inputStream = contentResolver.openInputStream(uri) ?: return
+                val dir = File(getExternalFilesDir(Environment.DIRECTORY_MOVIES), "free_elements")
+                dir.mkdirs()
+                val outFile = File(dir, "element_${System.currentTimeMillis()}.png")
+                FileOutputStream(outFile).use { fos ->
+                    val buffer = ByteArray(8192)
+                    var read: Int
+                    while (inputStream.read(buffer).also { read = it } != -1) {
+                        fos.write(buffer, 0, read)
+                    }
+                    fos.flush()
+                }
+                inputStream.close()
+                freeElement.imagePath = outFile.absolutePath
+            }
 
-        // Change Background — opens background selection
-        binding.btnChangeBg.setOnClickListener {
-            // TODO: Launch background picker (GalleryPickerOneImage or ColorPicker)
-        }
+            elements.add(freeElement)
 
-        // Delete selected element
-        binding.btnDelete.setOnClickListener {
-            if (selectedIndex in freeElements.indices) {
-                freeElements.removeAt(selectedIndex)
-                selectedIndex = -1
-                // TODO: Redraw canvas
+            val imageView = ImageView(this)
+            val width = (container.width * freeElement.width).toInt()
+            val height = (container.height * freeElement.height).toInt()
+            val decoded = BitmapFactory.decodeFile(freeElement.imagePath, BitmapFactory.Options())
+            if (decoded == null || decoded.width <= 0) return
+
+            imageView.setImageBitmap(Bitmap.createScaledBitmap(decoded, width, height, true))
+            imageView.scaleType = ImageView.ScaleType.FIT_CENTER
+            val params = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            ).apply { gravity = Gravity.CENTER }
+            imageView.layoutParams = params
+            imageView.setOnTouchListener(this)
+            viewMap[imageView] = freeElement
+            container.addView(imageView)
+            selectView(imageView)
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Error adding element", e)
+            Toast.makeText(this, "Error adding image", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  Delete selected element
+    // ═══════════════════════════════════════════════════════════════════
+
+    private fun deleteSelected() {
+        val view = selectedView ?: return
+        val element = viewMap[view] ?: return
+        elements.remove(element)
+        (view.parent as? ViewGroup)?.removeView(view)
+        selectedView = null
+        val btnDelete = findViewById<Button>(ID_BTN_DELETE)
+        btnDelete?.visibility = View.GONE
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  Save and finish — updates positions from views, stores to Common
+    // ═══════════════════════════════════════════════════════════════════
+
+    private fun saveAndFinish() {
+        val childCount = container.childCount
+        for (i in 0 until childCount) {
+            val child = container.getChildAt(i)
+            if (viewMap.containsKey(child)) {
+                updateElementFromView(child)
             }
         }
+        Common.freeElements = elements
+        setResult(RESULT_OK)
+        finish()
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    //  Background
+    //  Select / highlight a view
     // ═══════════════════════════════════════════════════════════════════
 
-    /**
-     * Loads the template background image path from the launching intent
-     * and displays it behind the free-layer canvas.
-     */
-    private fun loadBackgroundFromIntent() {
-        val bgPath = intent.getStringExtra(EXTRA_BG_PATH)
-        if (!bgPath.isNullOrEmpty()) {
-            com.bumptech.glide.Glide.with(this)
-                .load(java.io.File(bgPath))
-                .centerCrop()
-                .into(binding.ivBackground)
+    private fun selectView(view: View?) {
+        selectedView?.let {
+            it.isSelected = false
+            it.background = null
+        }
+        selectedView = view
+        if (view != null) {
+            view.isSelected = true
+            val gradientDrawable = GradientDrawable().apply {
+                setColor(Color.parseColor("#FF6C63FF"))
+                alpha = 0
+                setStroke(3, Color.parseColor("#FF6C63FF"))
+            }
+            view.background = gradientDrawable
+            val btnDelete = findViewById<Button>(ID_BTN_DELETE)
+            btnDelete?.visibility = View.VISIBLE
         }
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    //  Activity Result
+    //  Update FreeElement position from view coordinates
+    // ═══════════════════════════════════════════════════════════════════
+
+    private fun updateElementFromView(view: View) {
+        val freeElement = viewMap[view] ?: return
+        val containerHeight = container.height
+        if (container.width <= 0 || containerHeight <= 0) return
+        freeElement.x = view.x / containerHeight
+        freeElement.y = view.y / container.height
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  Activity result — handles gallery image picker
     // ═══════════════════════════════════════════════════════════════════
 
     @Deprecated("Use Activity Result API in future refactor")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == RESULT_OK && data != null) {
-            when (requestCode) {
-                REQ_GALLERY_IMAGE -> {
-                    val imagePath = data.getStringExtra("image_path")
-                    if (imagePath != null && selectedIndex in freeElements.indices) {
-                        freeElements[selectedIndex].imagePath = imagePath
-                    }
-                }
-                REQ_TEXT_EDIT -> {
-                    val text = data.getStringExtra("text")
-                    if (text != null && selectedIndex in freeElements.indices) {
-                        freeElements[selectedIndex].type = "text"
-                    }
-                }
-            }
+        if (requestCode == PICK_IMAGE && resultCode == RESULT_OK && data != null) {
+            data.data?.let { addElementFromUri(it) }
+        } else if (resultCode != RESULT_CANCELED && data != null) {
+            data.data?.let { addElementFromUri(it) }
         }
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    //  Companion
+    //  OnClickListener — button dispatch
     // ═══════════════════════════════════════════════════════════════════
 
-    companion object {
-        const val EXTRA_FREE_ELEMENTS_COUNT = "free_elements_count"
-        const val EXTRA_FREE_ELEMENTS = "free_elements"
-        const val EXTRA_BG_PATH = "bg_path"
-        const val REQ_GALLERY_IMAGE = 2001
-        const val REQ_TEXT_EDIT = 2002
+    override fun onClick(view: View) {
+        when (view.id) {
+            ID_BTN_ADD -> {
+                // Open gallery image picker
+                val intent = Intent().apply {
+                    action = Intent.ACTION_PICK
+                    data = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                    type = "image/*"
+                }
+                @Suppress("DEPRECATION")
+                startActivityForResult(intent, PICK_IMAGE)
+            }
+            ID_BTN_DONE -> saveAndFinish()
+            ID_BTN_DELETE -> deleteSelected()
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  OnTouchListener — drag logic for free elements
+    // ═══════════════════════════════════════════════════════════════════
+
+    override fun onTouch(view: View, motionEvent: MotionEvent): Boolean {
+        when (motionEvent.action) {
+            MotionEvent.ACTION_DOWN -> {
+                selectView(view)
+                lastTouchX = motionEvent.rawX
+                lastTouchY = motionEvent.rawY
+                isMoving = true
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (!isMoving) return false
+                val dx = (motionEvent.rawX - lastTouchX).toInt()
+                val dy = (motionEvent.rawY - lastTouchY).toInt()
+                view.translationX = view.translationX + dx
+                view.translationY = view.translationY + dy
+                lastTouchX = motionEvent.rawX
+                lastTouchY = motionEvent.rawY
+                return true
+            }
+            MotionEvent.ACTION_UP -> {
+                isMoving = false
+                updateElementFromView(view)
+                return true
+            }
+        }
+        return false
     }
 }
