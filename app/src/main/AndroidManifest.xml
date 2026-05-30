@@ -51,7 +51,7 @@
         <!-- Launcher Activity (Splash → Main)                   -->
         <!-- ═══════════════════════════════════════════════════ -->
         <activity
-            android:name="hazem.nurmontage.videoquran.FullscreenActivity"
+            android:name="hazem.nurmontage.videoquran.ui.splash.FullscreenActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
             android:screenOrientation="portrait"
@@ -66,12 +66,12 @@
         <!-- Core Engine Activities                              -->
         <!-- ═══════════════════════════════════════════════════ -->
         <activity
-            android:name="hazem.nurmontage.videoquran.EngineActivity"
+            android:name="hazem.nurmontage.videoquran.ui.engine.EngineActivity"
             android:exported="false"
             android:screenOrientation="portrait"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.ProgressViewActivity"
+            android:name="hazem.nurmontage.videoquran.ui.render.ProgressViewActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.App.Fullscreen"/>
@@ -80,34 +80,34 @@
         <!-- Video/Media Activities                              -->
         <!-- ═══════════════════════════════════════════════════ -->
         <activity
-            android:name="hazem.nurmontage.videoquran.VideoViewActivity"
+            android:name="hazem.nurmontage.videoquran.ui.editor.VideoViewActivity"
             android:configChanges="layoutDirection|locale|orientation|screenLayout|screenSize"
             android:exported="true"
             android:screenOrientation="portrait"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.VideoPlayerActivity"
+            android:name="hazem.nurmontage.videoquran.ui.editor.VideoPlayerActivity"
             android:configChanges="orientation|screenLayout|screenSize"
             android:exported="false"
             android:theme="@style/App.VideoPlayer"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.PlayVideoActivity"
+            android:name="hazem.nurmontage.videoquran.ui.editor.PlayVideoActivity"
             android:exported="false"
             android:screenOrientation="portrait"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.GalleryPickerVideo"
+            android:name="hazem.nurmontage.videoquran.ui.gallery.GalleryPickerVideo"
             android:exported="false"
             android:screenOrientation="portrait"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.GalleryPickerOneImage"
+            android:name="hazem.nurmontage.videoquran.ui.gallery_photos.GalleryPickerOneImage"
             android:exported="false"
             android:screenOrientation="portrait"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.ChoiceBgFromVideoActivity"
+            android:name="hazem.nurmontage.videoquran.ui.editor.ChoiceBgFromVideoActivity"
             android:exported="false"
             android:screenOrientation="portrait"/>
 
@@ -115,31 +115,31 @@
         <!-- Editor Activities                                   -->
         <!-- ═══════════════════════════════════════════════════ -->
         <activity
-            android:name="hazem.nurmontage.videoquran.TextEditActivity"
+            android:name="hazem.nurmontage.videoquran.ui.editor.text.TextEditActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateVisible"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.EditS_NameActivity"
+            android:name="hazem.nurmontage.videoquran.ui.editor.EditSNameActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateVisible"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.EditTrslTxtActivity"
+            android:name="hazem.nurmontage.videoquran.ui.editor.EditTrslTxtActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateVisible"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.AddReaderNameActivity"
+            android:name="hazem.nurmontage.videoquran.ui.editor.audio.AddReaderNameActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateVisible"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.CropBitmapActivity"
+            android:name="hazem.nurmontage.videoquran.ui.editor.CropBitmapActivity"
             android:exported="false"
             android:screenOrientation="portrait"/>
 
@@ -147,18 +147,18 @@
         <!-- Search & Browse Activities                          -->
         <!-- ═══════════════════════════════════════════════════ -->
         <activity
-            android:name="hazem.nurmontage.videoquran.QuranSearchActivity"
+            android:name="hazem.nurmontage.videoquran.ui.search.QuranSearchActivity"
             android:exported="false"
             android:screenOrientation="portrait"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.PixabaySearchActivity"
+            android:name="hazem.nurmontage.videoquran.ui.search.PixabaySearchActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.NurMontage"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.WorkUserActivity"
+            android:name="hazem.nurmontage.videoquran.ui.home.WorkUserActivity"
             android:configChanges="layoutDirection|locale"
             android:exported="true"
             android:screenOrientation="portrait"/>
@@ -167,13 +167,13 @@
         <!-- Free Layer / Social Activities                      -->
         <!-- ═══════════════════════════════════════════════════ -->
         <activity
-            android:name="hazem.nurmontage.videoquran.FreeLayerActivity"
+            android:name="hazem.nurmontage.videoquran.ui.editor.FreeLayerActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.NurMontage"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.ShareWithMeActivity"
+            android:name="hazem.nurmontage.videoquran.ui.share.ShareWithMeActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -186,7 +186,7 @@
         </activity>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.YoutuberActivity"
+            android:name="hazem.nurmontage.videoquran.ui.home.YoutuberActivity"
             android:exported="false"
             android:screenOrientation="portrait"/>
 
@@ -194,23 +194,23 @@
         <!-- Settings & Info Activities                          -->
         <!-- ═══════════════════════════════════════════════════ -->
         <activity
-            android:name="hazem.nurmontage.videoquran.SeettingActivity"
+            android:name="hazem.nurmontage.videoquran.ui.settings.SeettingActivity"
             android:exported="false"
             android:screenOrientation="portrait"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.AboutActivity"
+            android:name="hazem.nurmontage.videoquran.ui.settings.AboutActivity"
             android:exported="false"
             android:screenOrientation="portrait"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.ChoiceLangActivity"
+            android:name="hazem.nurmontage.videoquran.ui.settings.ChoiceLangActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.NurMontage"/>
 
         <activity
-            android:name="hazem.nurmontage.videoquran.ThanksYouActivity"
+            android:name="hazem.nurmontage.videoquran.ui.settings.ThanksYouActivity"
             android:exported="false"
             android:screenOrientation="portrait"/>
 
