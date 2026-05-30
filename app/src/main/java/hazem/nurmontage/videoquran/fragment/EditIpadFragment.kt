@@ -49,9 +49,9 @@ class EditIpadFragment : Fragment {
             isGradient: Boolean,
             isGlass: Boolean
         ): EditIpadFragment {
-            if (instance == null) {
-                instance = EditIpadFragment(resources, ipadType, callback, indexSelect, isGradient, isGlass)
-            }
+            // Always create a new instance with updated params to ensure
+            // callback, ipadType, and other state are current
+            instance = EditIpadFragment(resources, ipadType, callback, indexSelect, isGradient, isGlass)
             return instance!!
         }
     }

@@ -2584,7 +2584,7 @@ private fun initViews() {
     trackViewEntity.setRedoUndo(btnRedo, btnUndo)
     val blurredImgView = findViewById<BlurredImageView>(R.id.view)
     blurredImageView = blurredImgView
-    blurredImgView.setPro(false) // MyPreferences.isSubscribed(this@EngineActivity) // TODO: implement
+    blurredImgView.setPro(true) // Billing removed - all features unlocked
     blurredImageView.setiViewCallback(object : BlurredImageView.IViewCallback {
         override fun onDrawFinish() {}
         override fun onSquare() {}
@@ -5446,7 +5446,7 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
                     } else {
                         "https://everyayah.com/data/${recitersModel.identifer}/${recitersModel.surah_index}${recitersModel.number_aya}.mp3"
                     }
-                    val downloadFile = AudioUtils.downloadFile(this, str, mTemplate!!.folder_template!!)!!
+                    val downloadFile = AudioUtils.downloadFile(this, str, mTemplate!!.folder_template!!)
                     if (downloadFile != null) {
                         arrayList.add(downloadFile)
                         arrayList2.add(str)
@@ -5463,6 +5463,17 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
+            }
+            // If no audio files were downloaded, skip FFmpeg and finish
+            if (arrayList.isEmpty()) {
+                handler.post {
+                    hideProgressFragment()
+                    hideFragment()
+                    updateTimeToEndAya()
+                    updateBtnToEnd()
+                    updateBtnToStart()
+                }
+                return
             }
             val file = File(mTemplate!!.folder_template, "concat_${System.currentTimeMillis()}.txt")
             val fileOutputStream = FileOutputStream(file)
@@ -7319,7 +7330,7 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
     }
 
     private val isSubscribed: Boolean
-        get() = false
+        get() = true // Billing removed - all features unlocked
 
     private lateinit var seekbar_fps: CustomDiscreteSeekBar
     private lateinit var seekbar_resolution: CustomDiscreteSeekBar
