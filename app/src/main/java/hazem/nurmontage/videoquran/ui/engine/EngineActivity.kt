@@ -196,9 +196,9 @@ class EngineActivity : BaseActivity() {
             }
         }
 
-        // Initialize the engine UI
-        initViews()
+        // Initialize the engine UI (order matters: timeline first, then views)
         initTimeLineView()
+        initViews()
 
         // Register back-press handler
         onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
