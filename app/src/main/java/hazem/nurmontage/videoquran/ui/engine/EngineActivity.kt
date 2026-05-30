@@ -2449,7 +2449,7 @@ private fun initResolution() {
             layout_resolution?.visibility = View.GONE
         }
     }
-    // seekBar_fps = findViewById(R.id.seekbar_fps) // TODO: fix resource ID
+    seekBar_fps = findViewById(R.id.seekBar_fps)
     when (mTemplate!!.fps) {
         15 -> seekBar_fps.setProgress(0)
         25 -> seekBar_fps.setProgress(1)
@@ -2467,7 +2467,7 @@ private fun initResolution() {
         }
     })
     tv_resolution.text = mTemplate!!.resolution
-    // seekBar_res = findViewById(R.id.seekbar_resolution) // TODO: fix resource ID
+    seekBar_res = findViewById(R.id.seekBar_res)
     when (mTemplate!!.resolution) {
         "480p" -> seekBar_res.setProgress(0)
         "720p" -> seekBar_res.setProgress(1)

@@ -172,4 +172,19 @@
     <string name="search_hint_pixabay">Search images on Pixabay</string>
     <string name="_4_8_434_reviews_28k_users">4.8 (434 reviews, 28k users)</string>
     <string name="msj_send_lnk">Send link</string>
+
+    <string-array name="fps_labels">
+        <item>15</item>
+        <item>25</item>
+        <item>30</item>
+        <item>50</item>
+        <item>60</item>
+    </string-array>
+
+    <string-array name="resolution_labels">
+        <item>480p</item>
+        <item>720p</item>
+        <item>1080p</item>
+        <item>4K</item>
+    </string-array>
 </resources>
