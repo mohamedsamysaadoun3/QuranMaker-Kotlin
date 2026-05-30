@@ -232,7 +232,7 @@ class EngineActivity : BaseActivity() {
     }
 
     private var activityLauncher: ActivityResultLauncher<Intent>? = null
-    private lateinit var animator_frame_video: SmoothVideoAnimator
+    private var animator_frame_video: SmoothVideoAnimator? = null
     private lateinit var blurredImageView: BlurredImageView
     private lateinit var btnChangeResize: LinearLayout
     private lateinit var btnIpod: LinearLayout
@@ -7096,11 +7096,10 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
     }
 
     fun stop() {
-        blurredImageView.isDrawingSquareVideo = false
-        val smoothVideoAnimator = animator_frame_video
-        if (smoothVideoAnimator != null) {
-            smoothVideoAnimator.stop()
+        if (::blurredImageView.isInitialized) {
+            blurredImageView.isDrawingSquareVideo = false
         }
+        animator_frame_video?.stop()
     }
 
     private fun updateFrame() {
