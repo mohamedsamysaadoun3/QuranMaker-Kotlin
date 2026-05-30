@@ -173,6 +173,37 @@ import hazem.nurmontage.videoquran.ui.render.ProgressViewActivity
 @Suppress("TYPE_CHECKING_HAS_RUN_INTO_RECURSIVE_PROBLEM")
 class EngineActivity : BaseActivity() {
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_time_line)
+
+        mResources = resources
+
+        // Load or create template
+        val projectPath = intent.getStringExtra("project_path")
+        if (projectPath != null) {
+            mTemplate = LocalPersistence.readObjectFromFile(this, projectPath) as? Template
+        }
+        if (mTemplate == null) {
+            mTemplate = LocalPersistence.readObjectFromFile(this, Constants.TEMPLATE_TMP) as? Template
+        }
+        if (mTemplate == null) {
+            mTemplate = Template().apply {
+                uri_bg = "android.resource://$packageName/drawable/bg_19"
+                name_drawable = "bg_19"
+                val size = AspectRatioCalculator.getSize(resizeType, resolution)
+                setWidthAndHeight(size.first, size.second)
+            }
+        }
+
+        // Initialize the engine UI
+        initViews()
+        initTimeLineView()
+
+        // Register back-press handler
+        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+    }
+
     // Helper functions to break recursive type inference at getInstance call sites
     private fun createAddQuranFragment(cb: AddQuranFragment.IAddQuran, res: Resources): AddQuranFragment =
         AddQuranFragment.getInstance(cb, res)
