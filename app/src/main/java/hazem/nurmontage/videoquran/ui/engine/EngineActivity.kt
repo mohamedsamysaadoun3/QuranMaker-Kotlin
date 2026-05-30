@@ -146,7 +146,7 @@ import hazem.nurmontage.videoquran.model.data.TranslationQuranEntity
 import hazem.nurmontage.videoquran.views.BlurredImageView
 import hazem.nurmontage.videoquran.views.ButtonCustumFont
 import hazem.nurmontage.videoquran.views.CustomDiscreteSeekBar
-import hazem.nurmontage.videoquran.views.TextCustumFont
+import hazem.nurmontage.videoquran.views.text.TextCustumFont
 import hazem.nurmontage.videoquran.views.TextCustumFontBold
 import hazem.nurmontage.videoquran.views.TrackEntityView
 import hazem.nurmontage.videoquran.core.base.BaseActivity

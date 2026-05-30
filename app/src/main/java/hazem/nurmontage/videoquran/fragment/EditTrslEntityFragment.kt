@@ -14,7 +14,7 @@ import hazem.nurmontage.videoquran.R
 import hazem.nurmontage.videoquran.constant.AyaTextPreset
 import hazem.nurmontage.videoquran.databinding.FragmentEditEntityBinding
 import hazem.nurmontage.videoquran.entity_timeline.Entity
-import hazem.nurmontage.videoquran.views.TextCustumFont
+import hazem.nurmontage.videoquran.views.text.TextCustumFont
 
 /**
  * Bottom-sheet fragment for editing translation entity actions on the timeline.

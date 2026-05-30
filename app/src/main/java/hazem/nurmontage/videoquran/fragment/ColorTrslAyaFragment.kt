@@ -18,7 +18,7 @@ import hazem.nurmontage.videoquran.databinding.FragmentColorAyaBinding
 import hazem.nurmontage.videoquran.fragment.EditTrslEntityFragment
 import hazem.nurmontage.videoquran.model.data.TranslationQuranEntity
 import hazem.nurmontage.videoquran.utils.Utils
-import hazem.nurmontage.videoquran.views.TextCustumFont
+import hazem.nurmontage.videoquran.views.text.TextCustumFont
 
 /**
  * Fragment for selecting the color and text preset (None/Outline/Shadow/Glow)

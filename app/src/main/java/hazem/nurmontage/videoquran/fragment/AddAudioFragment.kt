@@ -9,7 +9,7 @@ import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import hazem.nurmontage.videoquran.R
 import hazem.nurmontage.videoquran.databinding.FragmentAddAudioBinding
-import hazem.nurmontage.videoquran.views.TextCustumFont
+import hazem.nurmontage.videoquran.views.text.TextCustumFont
 
 /**
  * Bottom-sheet fragment for adding audio to a project.

@@ -21,7 +21,7 @@ import hazem.nurmontage.videoquran.constant.TransitionType
 import hazem.nurmontage.videoquran.databinding.FragmentEffectAyaBinding
 import hazem.nurmontage.videoquran.entity_timeline.EntityQuranTimeline
 import hazem.nurmontage.videoquran.model.Transition
-import hazem.nurmontage.videoquran.views.TextCustumFont
+import hazem.nurmontage.videoquran.views.text.TextCustumFont
 import nl.dionsegijn.konfetti.core.Angle
 
 /**

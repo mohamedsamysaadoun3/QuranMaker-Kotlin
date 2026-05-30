@@ -10,7 +10,7 @@ import androidx.fragment.app.Fragment
 import hazem.nurmontage.videoquran.R
 import hazem.nurmontage.videoquran.databinding.FragmentEditSNameBinding
 import hazem.nurmontage.videoquran.model.SurahNameEntity
-import hazem.nurmontage.videoquran.views.TextCustumFont
+import hazem.nurmontage.videoquran.views.text.TextCustumFont
 
 /**
  * Bottom-sheet fragment for editing Surah name entities on the timeline.

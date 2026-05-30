@@ -8,7 +8,7 @@ import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import hazem.nurmontage.videoquran.R
 import hazem.nurmontage.videoquran.databinding.FragmentProgressViewBinding
-import hazem.nurmontage.videoquran.views.TextCustumFont
+import hazem.nurmontage.videoquran.views.text.TextCustumFont
 
 /**
  * A progress overlay fragment that displays a "current/total" text counter

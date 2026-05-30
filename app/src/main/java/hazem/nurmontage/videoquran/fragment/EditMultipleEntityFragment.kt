@@ -13,7 +13,7 @@ import androidx.fragment.app.Fragment
 import hazem.nurmontage.videoquran.R
 import hazem.nurmontage.videoquran.databinding.FragmentEditMediaMultipleBinding
 import hazem.nurmontage.videoquran.entity_timeline.Entity
-import hazem.nurmontage.videoquran.views.TextCustumFont
+import hazem.nurmontage.videoquran.views.text.TextCustumFont
 
 /**
  * Bottom-sheet fragment for editing multiple selected entities on the timeline.

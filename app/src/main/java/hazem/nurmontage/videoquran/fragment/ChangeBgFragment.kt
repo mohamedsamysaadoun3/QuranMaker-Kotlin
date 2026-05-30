@@ -15,7 +15,7 @@ import hazem.nurmontage.videoquran.adapter.IBgCallback
 import hazem.nurmontage.videoquran.model.BgItem
 import hazem.nurmontage.videoquran.utils.AppUtils
 import hazem.nurmontage.videoquran.utils.ScreenUtils
-import hazem.nurmontage.videoquran.views.TextCustumFont
+import hazem.nurmontage.videoquran.views.text.TextCustumFont
 
 /**
  * Fragment for selecting and changing the video background.
