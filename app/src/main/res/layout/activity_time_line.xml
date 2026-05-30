@@ -94,7 +94,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"/>
         </RelativeLayout>
-        <ImageView
+        <hazem.nurmontage.videoquran.views.BlurredImageView
             android:layout_gravity="center"
             android:id="@+id/view"
             android:layout_width="match_parent"
