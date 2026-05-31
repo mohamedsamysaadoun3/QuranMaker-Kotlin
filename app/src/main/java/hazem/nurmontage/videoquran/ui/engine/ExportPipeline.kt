@@ -139,7 +139,7 @@ class ExportPipeline(
             //  - Serialise media entities
             //  - Serialise effect audio list
 
-            LocalPersistence.writeObjectToFile(context, tmpl, tmpl.idTemplate ?: "template_tmp")
+            LocalPersistence.writeTemplate(context, tmpl, tmpl.idTemplate ?: "template_tmp", tmpl.idTemplate ?: "template_tmp")
         } catch (e: Exception) {
             Log.e(TAG, "saveTemplate failed", e)
         }
@@ -177,7 +177,7 @@ class ExportPipeline(
 
             // TODO: Move full entity serialisation loop from EngineActivity.saveTemplateTmp()
 
-            LocalPersistence.writeObjectToFile(context, tmpl, Constants.TEMPLATE_TMP)
+            LocalPersistence.writeTemplate(context, tmpl, Constants.TEMPLATE_TMP, Constants.TEMPLATE_TMP)
         } catch (e: Exception) {
             Log.e(TAG, "saveTemplateTmp failed", e)
         }

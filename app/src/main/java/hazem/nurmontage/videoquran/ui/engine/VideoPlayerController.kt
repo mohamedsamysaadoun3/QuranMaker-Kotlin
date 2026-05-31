@@ -29,7 +29,7 @@ class VideoPlayerController(
     private val previewView: SurfaceView? = null
 ) {
     private var mediaPlayer: MediaPlayer? = null
-    private var isPlaying: Boolean = false
+    private var _isPlaying: Boolean = false
     private var smoothVideoAnimator: SmoothVideoAnimator? = null
 
     // ──────────────────────────────────────────────
@@ -55,7 +55,7 @@ class VideoPlayerController(
                 }
                 setOnPreparedListener { mp ->
                     mp?.start()
-                    isPlaying = true
+                    _isPlaying = true
                 }
                 prepareAsync()
             }
@@ -79,7 +79,7 @@ class VideoPlayerController(
                 }
                 setOnPreparedListener { mp ->
                     mp?.start()
-                    isPlaying = true
+                    _isPlaying = true
                 }
                 prepareAsync()
             }
@@ -104,7 +104,7 @@ class VideoPlayerController(
                 }
             }
             smoothVideoAnimator?.stop()
-            isPlaying = false
+            _isPlaying = false
         } catch (e: Exception) {
             Log.e(TAG, "pause failed", e)
         }
@@ -120,7 +120,7 @@ class VideoPlayerController(
             mediaPlayer?.let {
                 if (!it.isPlaying) {
                     it.start()
-                    isPlaying = true
+                    _isPlaying = true
                 }
             }
         } catch (e: Exception) {
@@ -137,7 +137,7 @@ class VideoPlayerController(
         try {
             mediaPlayer?.stop()
             smoothVideoAnimator?.stop()
-            isPlaying = false
+            _isPlaying = false
         } catch (e: Exception) {
             Log.e(TAG, "stop failed", e)
         }
@@ -156,7 +156,7 @@ class VideoPlayerController(
         }
         mediaPlayer = null
         smoothVideoAnimator = null
-        isPlaying = false
+        _isPlaying = false
     }
 
     // ──────────────────────────────────────────────
@@ -171,7 +171,7 @@ class VideoPlayerController(
         }
     }
 
-    fun isPlaying(): Boolean = isPlaying
+    fun isPlaying(): Boolean = _isPlaying
 
     fun getDuration(): Int = try { mediaPlayer?.duration ?: 0 } catch (_: Exception) { 0 }
 

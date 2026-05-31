@@ -7897,8 +7897,9 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
                 AudioUtils.copyToLocalAsync(
                     this,
                     mTemplate!!.uri_original_upload_video!!,
-                    mTemplate!!.folder_template!!
-                ) { localVideoPath ->
+                    mTemplate!!.folder_template!!,
+                    object : AudioUtils.Callback {
+                        override fun onSuccess(localVideoPath: String) {
                     try {
                         mTemplate!!.uri_media_video = localVideoPath
                         val fileVideo = FileUtils.getFileVideo(mTemplate!!.folder_template!!)!!
@@ -8042,7 +8043,17 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
                         e.printStackTrace()
                         runOnUiThread { hideProgressFragment() }
                     }
-                }
+                        }
+
+                        override fun onError(exception: Exception) {
+                            // Fallback on copy error
+                            uri_bg = "android.resource://$packageName/drawable/${R.drawable.bg_1}"
+                            mTemplate!!.name_drawable = "bg_1"
+                            mTemplate!!.color_ipad = -1
+                            mTemplate!!.isVideoSquare = false
+                            iniTypeImg()
+                        }
+                    })
             } catch (e: Exception) {
                 // Fallback: if video init fails, treat as image
                 uri_bg = "android.resource://$packageName/drawable/${R.drawable.bg_1}"
