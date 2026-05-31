@@ -1745,3 +1745,23 @@ fun EngineActivity.createFrameProcessorRunnable(): Runnable {
         }
     }
 }
+
+// ==========================================================================
+// Type-inference helper functions — break recursive type inference
+// ==========================================================================
+
+internal fun EngineActivity.createAddQuranFragment(cb: AddQuranFragment.IAddQuran, res: android.content.res.Resources): AddQuranFragment =
+    AddQuranFragment.getInstance(cb, res)
+
+internal fun EngineActivity.getEditSNameCb(): EditS_NameFragment.IEditS_Name = iEditSName
+internal fun EngineActivity.getBismilahEntityCb(): EditBismilahEntityFragment.IBismilahEntityCallback = iBismilahEntityCallback
+internal fun EngineActivity.getEditTrstEntityCb(): EditTrslEntityFragment.IEditEntityCallback = iEditTrstEntityCallback
+
+internal fun EngineActivity.createColorSNameFragment(cb: EditS_NameFragment.IEditS_Name, entity: hazem.nurmontage.videoquran.model.SurahNameEntity, res: android.content.res.Resources): hazem.nurmontage.videoquran.fragment.ColorS_NameFragment =
+    hazem.nurmontage.videoquran.fragment.ColorS_NameFragment.getInstance(cb, entity, res)
+
+internal fun EngineActivity.createColorBismilahFragment(cb: EditBismilahEntityFragment.IBismilahEntityCallback, entity: hazem.nurmontage.videoquran.model.data.BismilahEntity, res: android.content.res.Resources): hazem.nurmontage.videoquran.fragment.ColorBismilahFragment =
+    hazem.nurmontage.videoquran.fragment.ColorBismilahFragment.getInstance(cb, entity, res)
+
+internal fun EngineActivity.createColorTrslAyaFragment(cb: EditTrslEntityFragment.IEditEntityCallback, entity: hazem.nurmontage.videoquran.model.data.TranslationQuranEntity, res: android.content.res.Resources): hazem.nurmontage.videoquran.fragment.ColorTrslAyaFragment =
+    hazem.nurmontage.videoquran.fragment.ColorTrslAyaFragment.getInstance(cb, entity, res)

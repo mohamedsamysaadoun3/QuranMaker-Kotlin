@@ -19,6 +19,7 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -36,6 +37,7 @@ import hazem.nurmontage.videoquran.fragment.*
 import hazem.nurmontage.videoquran.model.data.BismilahEntity
 import hazem.nurmontage.videoquran.model.data.QuranEntity
 import hazem.nurmontage.videoquran.model.data.TranslationQuranEntity
+import hazem.nurmontage.videoquran.model.Template
 import hazem.nurmontage.videoquran.model.SurahNameEntity
 import hazem.nurmontage.videoquran.core.common.Common
 import hazem.nurmontage.videoquran.core.common.Constants
@@ -221,6 +223,186 @@ fun EngineActivity.iniTypeImg() {
             android.util.Log.e("Tag : ", "init ${e.message}")
         }
     })
+}
+
+fun EngineActivity.initTypeVideo() {
+    val activity = this
+    executor.execute {
+        try {
+            blurredImageView.initCanvasDimension(
+                blurredImageView.getW(), blurredImageView.getH(), mTemplate!!.geTypeResize()
+            )
+            val height = blurredImageView.getH()
+
+            // Copy the original video to local storage, then extract a frame for the background
+            AudioUtils.copyToLocalAsync(
+                this,
+                mTemplate!!.uri_original_upload_video!!,
+                mTemplate!!.folder_template!!,
+                object : AudioUtils.Callback {
+                    override fun onSuccess(localVideoPath: String) {
+                        try {
+                            mTemplate!!.uri_media_video = localVideoPath
+                            val fileVideo = FileUtils.getFileVideo(mTemplate!!.folder_template!!)!!
+                            val framePattern = File(fileVideo, "frame_%04d.jpg")
+                            val firstFrame = File(fileVideo, "frame_0001.jpg")
+
+                            endFrame = Math.min(Math.round(trackViewEntity.maxTime / 1000.0f), 4)
+                            if (endFrame == 0) endFrame = 4
+
+                            // Extract initial frames from video for background
+                            id_ffmpeg.add(
+                                FFmpegKit.executeWithArgumentsAsync(
+                                    arrayOf(
+                                        "-i", localVideoPath, "-ss", "0", "-t", "$endFrame",
+                                        "-r", "25", "-vf",
+                                        "scale=$height:$height:force_original_aspect_ratio=increase",
+                                        "-q:v", "0", "-threads", "4", "-an", "-y",
+                                        framePattern.absolutePath
+                                    )
+                                ) { _ ->
+                                    try {
+                                        mTemplate!!.frame_bg = firstFrame.absolutePath
+                                        val bitmap = Glide.with(activity as androidx.fragment.app.FragmentActivity)
+                                            .asBitmap()
+                                            .load(mTemplate!!.frame_bg)
+                                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                                            .skipMemoryCache(true)
+                                            .override(height, height)
+                                            .submit().get()
+
+                                        blurredImageView.isGlass = mTemplate!!.isGlass
+                                        blurredImageView.isVideo = true
+                                        blurredImageView.bitmapOriginal = bitmap
+
+                                        val cropTo16x9 = when (mTemplate!!.geTypeResize()) {
+                                            ResizeType.SOCIAL_STORY.ordinal -> BitmapCropper.cropTo9x16(
+                                                blurredImageView.bitmapOriginal, blurredImageView.getW(), blurredImageView.getH()
+                                            )
+                                            ResizeType.SQUARE.ordinal -> BitmapCropper.cropTo1x1(
+                                                blurredImageView.bitmapOriginal, blurredImageView.getW(), blurredImageView.getH()
+                                            )
+                                            else -> BitmapCropper.cropTo16x9(
+                                                blurredImageView.bitmapOriginal, blurredImageView.getW(), blurredImageView.getH()
+                                            )
+                                        }
+
+                                        blurredImageView.updatePosCanvas(cropTo16x9!!)
+                                        blurredImageView.updateIpad(cropTo16x9, mTemplate!!.ipad_type, mTemplate!!.geTypeResize())
+
+                                        // Set blurred background based on ipad type
+                                        val isLayeredType = mTemplate!!.ipad_type == IpadType.BLACK_LAYER.ordinal ||
+                                                mTemplate!!.ipad_type == IpadType.GRADIENT.ordinal ||
+                                                mTemplate!!.ipad_type == IpadType.MASK_BRUSH.ordinal ||
+                                                mTemplate!!.ipad_type == IpadType.BLUE_TYPE.ordinal ||
+                                                mTemplate!!.ipad_type == IpadType.CASSET_IMG.ordinal ||
+                                                mTemplate!!.ipad_type == IpadType.CASSET_IMG_BLUR.ordinal
+
+                                        if (isLayeredType) {
+                                            if (mTemplate!!.gradient != null) {
+                                                blurredImageView.setBitmap(
+                                                    UtilsBitmap.blur(activity, cropTo16x9!!, 20, 1),
+                                                    null, mTemplate!!.gradient!!,
+                                                    mTemplate!!.ipad_type, mTemplate!!.geTypeResize(), null
+                                                )
+                                            } else {
+                                                blurredImageView.setBitmap(
+                                                    UtilsBitmap.blur(activity, cropTo16x9!!, 20, 1),
+                                                    null, mTemplate!!.color_ipad,
+                                                    mTemplate!!.ipad_type, mTemplate!!.geTypeResize(), null
+                                                )
+                                            }
+                                            val width8 = (blurredImageView.ipad_rect!!.width() * 1.0f).toInt()
+                                            val height7 = (cropTo16x9!!.height * 0.5355f).toInt()
+                                            var round7 = Math.round(blurredImageView.bitmapOriginal!!.width * mTemplate!!.x_square)
+                                            var round8 = Math.round(blurredImageView.bitmapOriginal!!.height * mTemplate!!.y_square)
+                                            var i11 = width8 + round7
+                                            if (i11 > blurredImageView.bitmapOriginal!!.width) {
+                                                round7 -= i11 - blurredImageView.bitmapOriginal!!.width
+                                                i11 = blurredImageView.bitmapOriginal!!.width
+                                            }
+                                            var i12 = height7 + round8
+                                            if (i12 > blurredImageView.bitmapOriginal!!.height) {
+                                                round8 -= i12 - blurredImageView.bitmapOriginal!!.height
+                                                i12 = blurredImageView.bitmapOriginal!!.height
+                                            }
+                                            if (round7 < 0) round7 = 0
+                                            if (round8 < 0) round8 = 0
+                                            val rect3 = android.graphics.Rect(round7, round8, i11, i12)
+                                            if (mTemplate!!.ipad_type == IpadType.CASSET_IMG_BLUR.ordinal) {
+                                                blurredImageView.bitmapSquare = blurredImageView.bitmapBlured
+                                            } else {
+                                                blurredImageView.bitmapSquare = cropTo16x9
+                                            }
+                                            blurredImageView.radius_square = 0
+                                            blurredImageView.rectSquare = rect3
+                                        } else {
+                                            // Standard ipad types — delegate to changeBitmap for the full flow
+                                            changeBitmap(firstFrame.absolutePath)
+                                        }
+
+                                        val clrTrsl = if (mTemplate!!.ipad_type == IpadType.BLUE_TYPE.ordinal) {
+                                            blurredImageView.paintLecture.color
+                                        } else {
+                                            if (blurredImageView.paintLecture.color == -1) androidx.core.view.InputDeviceCompat.SOURCE_ANY else Constants.COLOR_TRANSLATION
+                                        }
+                                        blurredImageView.clr_trsl = clrTrsl
+                                        blurredImageView.clr_aya = blurredImageView.paintLecture.color
+                                        addEntityFromTemplate()
+
+                                        // Start background extraction for remaining frames
+                                        id_ffmpeg.add(
+                                            FFmpegKit.executeWithArgumentsAsync(
+                                                arrayOf(
+                                                    "-i", localVideoPath, "-ss", "$endFrame",
+                                                    "-r", "25", "-vf",
+                                                    "scale=$height:$height:force_original_aspect_ratio=increase",
+                                                    "-start_number", "${endFrame * 25}",
+                                                    "-q:v", "0", "-threads", "4", "-an", "-y",
+                                                    framePattern.absolutePath
+                                                )
+                                            ) { _ ->
+                                            }.sessionId
+                                        )
+
+                                        runOnUiThread {
+                                            trackViewEntity.invalidate()
+                                            updateTime()
+                                            if (mTemplate!!.quranEntityList.isEmpty()) {
+                                                blurredImageView.invalidate()
+                                            }
+                                            hideProgressFragment()
+                                        }
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                        runOnUiThread { hideProgressFragment() }
+                                    }
+                                }.sessionId
+                            )
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            runOnUiThread { hideProgressFragment() }
+                        }
+                    }
+
+                    override fun onError(exception: Exception) {
+                        uri_bg = "android.resource://$packageName/drawable/${R.drawable.bg_1}"
+                        mTemplate!!.name_drawable = "bg_1"
+                        mTemplate!!.color_ipad = -1
+                        mTemplate!!.isVideoSquare = false
+                        iniTypeImg()
+                    }
+                })
+        } catch (e: Exception) {
+            // Fallback: if video init fails, treat as image
+            uri_bg = "android.resource://$packageName/drawable/${R.drawable.bg_1}"
+            mTemplate!!.name_drawable = "bg_1"
+            mTemplate!!.color_ipad = -1
+            mTemplate!!.isVideoSquare = false
+            iniTypeImg()
+            android.util.Log.e("Tag : ", "initTypeVideo fallback: ${e.message}")
+        }
+    }
 }
 
 fun EngineActivity.initResolution() {
@@ -1411,5 +1593,127 @@ fun EngineActivity.onVideoExtractResult(activityResult: ActivityResult) {
         extractAudioFromVideoRecursive(copyFromUri, 0, false, 0)
     } catch (e2: Exception) {
         e2.printStackTrace()
+    }
+}
+
+// ==========================================================================
+// loadTemplate, initLauncher, checkUriShared — template loading helpers
+// ==========================================================================
+
+internal fun EngineActivity.loadTemplate() {
+    var template = LocalPersistence.readObjectFromFile(this, Constants.TEMPLATE_TMP) as? Template
+    mTemplate = template
+    if (template == null && intent != null) {
+        val templatePath = intent.getStringExtra(Constants.TEMPLATE)
+        if (templatePath != null) {
+            val template2 = LocalPersistence.readObjectFromFile(this, templatePath) as? Template
+            mTemplate = template2
+            if (template2 != null) {
+                if (template2.name_drawable != null) {
+                    uri_bg = "android.resource://$packageName/drawable/${template2.name_drawable!!}"
+                } else {
+                    uri_bg = template2.uri_bg
+                }
+                if (template2.width < 1 || template2.height < 1) {
+                    template2.setWidthAndHeight(720, 1280)
+                }
+            }
+        }
+    }
+    val template3 = mTemplate
+    if (template3 == null) {
+        mTemplate = Template()
+        val imgBg = intent.getStringExtra("img_bg")
+        uri_bg = imgBg
+        if (imgBg != null) {
+            mTemplate!!.uri_bg = imgBg
+        } else {
+            val randomEntry = DrawableHelper.getRandomDrawableEntry()
+            val bgUri = "android.resource://$packageName/drawable/${randomEntry.key}"
+            uri_bg = bgUri
+            mTemplate!!.uri_bg = bgUri
+            mTemplate!!.name_drawable = randomEntry.key
+        }
+        mTemplate!!.setWidthAndHeight(720, 1280)
+    } else {
+        if (template3.name_drawable != null) {
+            uri_bg = "android.resource://$packageName/drawable/${template3.name_drawable!!}"
+        } else {
+            uri_bg = template3.uri_bg
+        }
+        if (template3.width < 1 || template3.height < 1) {
+            template3.setWidthAndHeight(720, 1280)
+        }
+    }
+    val file = FileUtils.getFile(applicationContext)
+    if (file != null) {
+        mTemplate!!.folder_template = file.absolutePath
+    }
+}
+
+internal fun EngineActivity.initLauncher() {
+    activityLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { activityResult: androidx.activity.result.ActivityResult ->
+        if (activityResult.resultCode == -1) {
+            val data = activityResult.data
+            if (data != null && data.data != null) {
+                val uri = data.data!!
+                try {
+                    contentResolver.takePersistableUriPermission(uri, 1)
+                } catch (e: Exception) { e.printStackTrace() }
+                addUriAudioToQuranFragment(uri, null)
+            } else {
+                android.widget.Toast.makeText(this, mResources?.getString(R.string.no_audio_select) ?: "No audio selected", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            android.widget.Toast.makeText(this, mResources?.getString(R.string.audio_cancel) ?: "Audio cancelled", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+}
+
+internal fun EngineActivity.checkUriShared() {
+    val stringExtra = intent.getStringExtra("muri")
+    if (stringExtra != null) {
+        addUriAudioToQuranFragment(Uri.parse(stringExtra), null)
+    }
+}
+
+// ==========================================================================
+// Player helpers
+// ==========================================================================
+
+internal fun EngineActivity.pausePlayer() {
+    try {
+        hideLayoutResolution()
+        if (mIsPlaying) {
+            mIsPlaying = false
+            pauseTimelineAnimation()
+            trackViewEntity.isPlaying = mIsPlaying
+            blurredImageView.isPlaying = mIsPlaying
+            trackViewEntity.invalidate()
+            for (entityAudio in trackViewEntity.entityListAudio) {
+                try {
+                    if (entityAudio.mediaPlayer != null && entityAudio.mediaPlayer!!.isPlaying) {
+                        entityAudio.mediaPlayer!!.pause()
+                    }
+                } catch (e: Exception) { e.printStackTrace() }
+            }
+            try {
+                btnPlayPause.setImageResource(R.drawable.play_btn)
+            } catch (_: UninitializedPropertyAccessException) {}
+            stop()
+        }
+        trackViewEntity.pauseScroll()
+    } catch (_: Exception) {}
+}
+
+internal fun EngineActivity.releaseWakeLock() {
+    try { window.clearFlags(0x00000400) } catch (_: Exception) {}
+}
+
+internal fun EngineActivity.clearFFmpeg() {
+    for (id in id_ffmpeg) {
+        FFmpegKit.cancel(id)
     }
 }
