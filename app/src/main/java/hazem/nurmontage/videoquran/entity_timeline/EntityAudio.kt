@@ -40,6 +40,23 @@ class EntityAudio : Entity {
     internal var downX: Float = 0f
     internal var duration: Int = 0
     var effectAudio: EffectAudio = EffectAudio()
+        set(value) {
+            // Deep copy matching original Java setEffectAudio behavior
+            field.reverbPreset = value.reverbPreset
+            field.speed = value.speed
+            field.volume = value.volume
+            field.fade_in = value.fade_in
+            field.fade_out = value.fade_out
+            field.decays = value.decays
+            field.isRemoveNoice = value.isRemoveNoice
+            field.delays_cmd = value.delays_cmd
+            field.delays = value.delays
+            field.decays_cmd = value.decays_cmd
+            field.outGain = value.outGain
+            field.volume_echo = value.volume_echo
+            field.isEnhance = value.isEnhance
+            field.reverbPreset_index_list = value.reverbPreset_index_list
+        }
     internal var h: Float = 0f
     internal var iTrimLineCallback: TrackEntityView.ITrimLineCallback? = null
     internal var isApplyEffectInPreview: Boolean = false
@@ -90,8 +107,8 @@ class EntityAudio : Entity {
         secondInScreen: Float,
         durationSec: Int,
         offset: Float,
-        offsetLeft: Float,
-        offsetRight: Float
+        offsetRight: Float,
+        offsetLeft: Float
     ) : super(secondInScreen) {
         this.effectAudio = EffectAudio()
         setOffsetRight(offsetRight)
@@ -188,6 +205,7 @@ class EntityAudio : Entity {
         effectAudio.isEnhance = newEffect.isEnhance
         effectAudio.reverbPreset_index_list = newEffect.reverbPreset_index_list
     }
+
 
     // ── FFmpeg paths ─────────────────────────────────────────────────
 
@@ -408,13 +426,16 @@ class EntityAudio : Entity {
 
     // ── Visibility helper ────────────────────────────────────────────
 
+    /** Alias for Java-compatible isVisible() — the property getter is inherited from [Entity] */
     fun isEntityVisible(): Boolean = isVisible
 
     // ── Start/End overrides ──────────────────────────────────────────
 
+    // Start/End are inherited from Entity as public var properties,
+    // which auto-generate getStart()/setStart() and getEnd()/setEnd().
+    // The following renamed accessors are kept as convenience methods:
     fun getAudioStart(): Float = start
     fun setAudioStart(s: Float) { start = s }
-
     fun getAudioEnd(): Float = end
     fun setAudioEnd(e: Float) { end = e }
 

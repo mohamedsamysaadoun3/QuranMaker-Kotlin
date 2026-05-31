@@ -3,4 +3,7 @@
     <declare-styleable name="CustomDiscreteSeekBar">
         <attr name="labelsArray" format="reference" />
     </declare-styleable>
+
+    <attr name="fullscreenBackgroundColor" format="color" />
+    <attr name="fullscreenTextColor" format="color" />
 </resources>

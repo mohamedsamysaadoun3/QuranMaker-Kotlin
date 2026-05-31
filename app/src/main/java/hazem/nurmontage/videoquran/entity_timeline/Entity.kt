@@ -123,6 +123,7 @@ abstract class Entity(secondInScreen: Float) {
     // ══════════════════════════════════════════════
 
     fun setColorSelectMultiple(color: Int) { colorSelectMultiple = color }
+    fun getColorSelectMultiple(): Int = colorSelectMultiple
 
     // ══════════════════════════════════════════════
     //  Audio & frame IDs

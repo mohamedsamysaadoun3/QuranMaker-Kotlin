@@ -218,7 +218,7 @@ class TrackEntityView @JvmOverloads constructor(
     internal var m_pos_y_marker: Float = 0f
     internal var markerHeight: Float = 0f
     internal var maxBottom: Float = 0f
-    internal var maxTime: Int = -1
+    var maxTime: Int = -1
         set(value) {
             field = value
             timeLineW = (value * getSecond_in_screen()) / 1000.0f
@@ -1261,6 +1261,4 @@ class TrackEntityView @JvmOverloads constructor(
     fun setCurrent_cursur_position(value: Int) { current_cursur_position = value }
 
     fun getTimeLineW(): Float = timeLineW
-
-    fun getMaxTime(): Int = maxTime
 }
