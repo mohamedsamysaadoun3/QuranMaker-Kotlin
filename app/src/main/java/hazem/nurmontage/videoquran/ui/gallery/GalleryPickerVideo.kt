@@ -209,7 +209,9 @@ class GalleryPickerVideo : BaseActivity() {
      */
     private fun onVideoSelected(videoItem: VideoItem) {
         val resultIntent = Intent().apply {
-            putExtra(EXTRA_VIDEO_URI, videoItem.path)
+            // Use setData() instead of putExtra() — the caller (EngineActivity)
+            // reads the URI via data.data (intent.data), not from extras
+            data = android.net.Uri.parse(videoItem.path)
         }
         setResult(RESULT_OK, resultIntent)
         finish()

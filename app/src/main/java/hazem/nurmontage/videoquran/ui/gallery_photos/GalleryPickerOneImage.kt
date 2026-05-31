@@ -45,7 +45,9 @@ class GalleryPickerOneImage : AppCompatActivity() {
         binding.tvDone.setOnClickListener {
             if (selectedImageUri != null) {
                 val resultIntent = Intent().apply {
-                    putExtra("image_uri", selectedImageUri)
+                    // Use setData() instead of putExtra() — the caller (EngineActivity)
+                    // reads the URI via data.data (intent.data), not from extras
+                    data = android.net.Uri.parse(selectedImageUri)
                 }
                 setResult(RESULT_OK, resultIntent)
             }

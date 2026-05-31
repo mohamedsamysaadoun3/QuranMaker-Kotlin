@@ -178,8 +178,6 @@ fun BlurredImageView.onDrawExt(canvas: Canvas) {
                         canvas.drawColor(this.color_bg_type_classic)
                     }
                 } else if (this.mIpadType != IpadType.IPAD_NEOMORPHIC.ordinal &&
-                    this.mIpadType != IpadType.HEART.ordinal &&
-                    this.mIpadType != IpadType.BATTERY.ordinal &&
                     this.mIpadType != IpadType.CASSET.ordinal
                 ) {
                     if (this.mIpadType == IpadType.IPAD_UNBLUR.ordinal) {
