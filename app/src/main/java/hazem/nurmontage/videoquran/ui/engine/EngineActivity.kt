@@ -206,6 +206,7 @@ class EngineActivity : BaseActivity() {
         wakeLockAcquire()
         showProgress()
         loadTemplate()
+        initLauncher()
 
         vibrationHelper = MyVibrationHelper(this)
 
@@ -310,6 +311,29 @@ class EngineActivity : BaseActivity() {
         val file = FileUtils.getFile(applicationContext)
         if (file != null) {
             mTemplate!!.folder_template = file.absolutePath
+        }
+    }
+
+    internal fun initLauncher() {
+        activityLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { activityResult: ActivityResult ->
+            if (activityResult.resultCode == -1) {
+                val data = activityResult.data
+                if (data != null && data.data != null) {
+                    val uri = data.data!!
+                    try {
+                        contentResolver.takePersistableUriPermission(uri, 1)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                    addUriAudioToQuranFragment(uri, null)
+                } else {
+                    Toast.makeText(this, mResources?.getString(R.string.no_audio_select) ?: "No audio selected", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this, mResources?.getString(R.string.audio_cancel) ?: "Audio cancelled", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -2716,7 +2740,7 @@ private fun initViews() {
     imageButton2.setOnClickListener {
         if (trackViewEntity.current_cursur_position == trackViewEntity.maxTime) return@setOnClickListener
         blurredImageView.progress = 1.0f
-        stop()
+        pausePlayer()
         startCursur = 0
         trackViewEntity.translateToEnd()
         updateViewTime(trackViewEntity.maxTime, trackViewEntity.current_cursur_position)
@@ -2728,7 +2752,7 @@ private fun initViews() {
     imageButton3.setOnClickListener {
         if (trackViewEntity.current_cursur_position == 0) return@setOnClickListener
         blurredImageView.progress = 0.0f
-        stop()
+        pausePlayer()
         startCursur = 0
         trackViewEntity.translateToStart()
         updateViewTime(trackViewEntity.maxTime, trackViewEntity.current_cursur_position)
@@ -2785,7 +2809,7 @@ private fun initViews() {
             if (entityView is SurahNameEntity) {
                 try {
                     if (EditS_NameFragment.instance != null) return
-                    stop()
+                    pausePlayer()
                     selectSurahName()
                     return
                 } catch (unused: Exception) {
@@ -2848,7 +2872,7 @@ private fun initViews() {
     val textCustumFont = findViewById<TextCustumFont>(R.id.tv_ipad)
     textCustumFont.text = mResources!!.getString(R.string.ipad)
     findViewById<View>(R.id.btn_add_quran).setOnClickListener {
-        stop()
+        pausePlayer()
         try {
             val beginTransaction = supportFragmentManager.beginTransaction()
             mCurrentFragment = AddQuranFragment.getInstance(iAddQuran, mResources)
@@ -2859,7 +2883,7 @@ private fun initViews() {
         }
     }
     findViewById<View>(R.id.btn_bg).setOnClickListener {
-        stop()
+        pausePlayer()
         try {
             val beginTransaction = supportFragmentManager.beginTransaction()
             mCurrentFragment = ChangeBgFragment.getInstance(iChangeBgCallback, mResources, mTemplate!!.name_drawable)
@@ -3926,9 +3950,9 @@ private fun initTimeLineView() {
     trackViewEntity.scaleFactor = mTemplate!!.scale_timeline
     trackViewEntity.post {
         val screenWidth = ScreenUtils.getScreenWidth(this@EngineActivity)
-        val f = screenWidth * 0.12f
-        // // trackViewEntity.secondInScreen = f // TODO // TODO: fix
-        // // trackViewEntity.secondInScreen = f // TODO // TODO: fix // TODO: fix second_in_screenNoScale call
+        val audioPosition = screenWidth * 0.12f
+        trackViewEntity.setSecond_in_screen(audioPosition)
+        trackViewEntity.setSecond_in_screen(audioPosition, 0, screenWidth)
         trackViewEntity.maxTime = 0
         trackViewEntity.init(screenWidth, trackViewEntity.height)
         trackViewEntity.setPosCursur(mTemplate!!.currentCursur)

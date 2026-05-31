@@ -624,7 +624,7 @@ fun EngineActivity.showProgressSimple() {
 fun EngineActivity.hideProgressFragment() {
     try {
         setStatusBarColor(-15658735)
-        setNavigationBarColor(-14903426)
+        setNavigationBarColor(-14803426)
         if (!isFinishing && !supportFragmentManager.isDestroyed) {
             val supportFragmentManager = supportFragmentManager
             val beginTransaction = supportFragmentManager.beginTransaction()

@@ -88,7 +88,7 @@ class AboutAdabters(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.row_feature, parent, false)
+            .inflate(R.layout.row_billing, parent, false)
         return ViewHolder(view)
     }
 

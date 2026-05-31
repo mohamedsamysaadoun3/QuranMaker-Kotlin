@@ -265,7 +265,9 @@ fun EngineActivity.initTimeLineView() {
     trackViewEntity.scaleFactor = mTemplate!!.scale_timeline
     trackViewEntity.post {
         val screenWidth = ScreenUtils.getScreenWidth(this)
-        val f = screenWidth * 0.12f
+        val audioPosition = screenWidth * 0.12f
+        trackViewEntity.setSecond_in_screen(audioPosition)
+        trackViewEntity.setSecond_in_screen(audioPosition, 0, screenWidth)
         trackViewEntity.maxTime = 0
         trackViewEntity.init(screenWidth, trackViewEntity.height)
         trackViewEntity.setPosCursur(mTemplate!!.currentCursur)
