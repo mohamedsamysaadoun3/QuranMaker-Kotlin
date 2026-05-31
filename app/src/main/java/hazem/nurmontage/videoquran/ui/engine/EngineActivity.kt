@@ -3202,8 +3202,20 @@ internal fun save() {
                         mTemplate!!.squareBitmapModel!!.set(blurredImageView.left_square, blurredImageView.top_square, i2.toFloat(), i3.toFloat(), rect3.width().toFloat(), rect3.height().toFloat(), bitmap2.width.toFloat(), bitmap2.height.toFloat(), 0f)
                     }
 
-                    // Heart/Battery fallback
-                    mTemplate!!.uri_bg_ffmpeg = blurredImageView.setupBitmapDraw(cropTo16x9!!, Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888), mTemplate!!)
+                    // For non-NEOMORPHIC/non-IPAD/non-UNBLUR/non-CLASSIC types inside the else block
+                    // (e.g. BOTTOM_RECT, ROUND_RECT, RECT, BORDER, CASSET)
+                    // These types don't go through the NEOMORPHIC/IPAD paths above,
+                    // so they need their uri_bg_ffmpeg set here
+                    if (mTemplate!!.ipad_type != IpadType.IPAD_NEOMORPHIC.ordinal &&
+                        mTemplate!!.ipad_type != IpadType.IPAD.ordinal &&
+                        mTemplate!!.ipad_type != IpadType.IPAD_UNBLUR.ordinal &&
+                        mTemplate!!.ipad_type != IpadType.IPAD_CLASSIC.ordinal &&
+                        mTemplate!!.ipad_type != IpadType.HEART.ordinal &&
+                        mTemplate!!.ipad_type != IpadType.BATTERY.ordinal
+                    ) {
+                        // BOTTOM_RECT, ROUND_RECT, RECT, BORDER, CASSET: use the blurred bitmap
+                        mTemplate!!.uri_bg_ffmpeg = blurredImageView.setupBitmapDraw(UtilsBitmap.blurInSave(this@EngineActivity, bitmap!!, 20, 1, this@EngineActivity.mTemplate!!.width, mTemplate!!.height)!!, cropToSquareWithRoundCorners!!, mTemplate!!)
+                    }
                 }
                 saveTemplate()
                 val intent = Intent(this@EngineActivity, ProgressViewActivity::class.java)
@@ -3212,20 +3224,21 @@ internal fun save() {
                 startActivity(intent)
                 overridePendingTransition(0, 0)
                 finish()
+            } else {
+                // HEART/BATTERY type handling — separate path with solid black background
+                val createBitmap = Bitmap.createBitmap(mTemplate!!.width, mTemplate!!.height, Bitmap.Config.RGB_565)
+                createBitmap.eraseColor(ViewCompat.MEASURED_STATE_MASK)
+                blurredImageView.updatePosCanvas(mTemplate!!.width, mTemplate!!.height, createBitmap)
+                blurredImageView.updateIpad(createBitmap, mTemplate!!.ipad_type, mTemplate!!.geTypeResize())
+                mTemplate!!.uri_bg_ffmpeg = blurredImageView.setupBitmapDraw(createBitmap, Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888), mTemplate!!)
+                saveTemplate()
+                val intent2 = Intent(this@EngineActivity, ProgressViewActivity::class.java)
+                intent2.putExtra(Constants.TEMPLATE, mTemplate!!.idTemplate)
+                intent2.addFlags(65536)
+                startActivity(intent2)
+                overridePendingTransition(0, 0)
+                finish()
             }
-            // HEART/BATTERY type handling
-            val createBitmap = Bitmap.createBitmap(mTemplate!!.width, mTemplate!!.height, Bitmap.Config.RGB_565)
-            createBitmap.eraseColor(ViewCompat.MEASURED_STATE_MASK)
-            blurredImageView.updatePosCanvas(mTemplate!!.width, mTemplate!!.height, createBitmap)
-            blurredImageView.updateIpad(createBitmap, mTemplate!!.ipad_type, mTemplate!!.geTypeResize())
-            mTemplate!!.uri_bg_ffmpeg = blurredImageView.setupBitmapDraw(createBitmap, Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888), mTemplate!!)
-            saveTemplate()
-            val intent2 = Intent(this@EngineActivity, ProgressViewActivity::class.java)
-            intent2.putExtra(Constants.TEMPLATE, mTemplate!!.idTemplate)
-            intent2.addFlags(65536)
-            startActivity(intent2)
-            overridePendingTransition(0, 0)
-            finish()
         } catch (e: Exception) {
             Log.e("Tag : ", "init ${e.message}")
         }
