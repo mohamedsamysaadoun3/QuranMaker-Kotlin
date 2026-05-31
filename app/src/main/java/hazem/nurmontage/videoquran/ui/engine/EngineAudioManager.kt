@@ -291,6 +291,11 @@ fun EngineActivity.addAudioReciters(list: List<RecitersModel>, i: Int) {
             mPlayer!!.setDataSource(this, parse)
         }
         mPlayer!!.prepareAsync()
+        // BEFORE: Missing onErrorListener — if prepareAsync fails, spinner runs forever
+        mPlayer!!.setOnErrorListener { _, _, _ ->
+            hideProgressFragment()
+            true
+        }
         mPlayer!!.setOnPreparedListener { mediaPlayer2 ->
             if (mediaPlayer2 == null) {
                 hideProgressFragment()
@@ -649,6 +654,13 @@ fun EngineActivity.changeEntityAudio(i: Int, uri: Uri, list: List<String>, i2: I
                 changeEntityAudioLambda(uri, round, round2, str, entityAudio, i2)
             }
             trackViewEntity.invalidate()
+        } else {
+            // BEFORE: Missing else — spinner stayed forever when audio duration was 0
+            // WHY_CHANGED: If round2 or round is 0, the audio lambda never runs and never hides progress
+            // FIXED_BY: Add else clause to hide progress and fragment
+            // VISUAL_IMPACT: Spinner always stops, even when audio has zero duration
+            hideProgressFragment()
+            hideFragment()
         }
     } catch (e: Exception) {
         e.printStackTrace()

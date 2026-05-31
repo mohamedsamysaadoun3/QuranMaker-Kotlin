@@ -700,7 +700,15 @@ class AddQuranFragment : Fragment {
                 }
             }
             addAyaEntityRecursive(from + 1, to, surahNumber)
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            // BEFORE: Silent catch — spinner stays forever when any exception occurs
+            // WHY_CHANGED: Exceptions (like NPE from onAdd callback) were swallowed silently
+            // FIXED_BY: Log the error and ensure spinner is stopped
+            // REF: Original Java had e.printStackTrace() here
+            // VISUAL_IMPACT: Spinner no longer runs forever on error
+            e.printStackTrace()
+            iAddQuran?.onCancel()
+        }
     }
 
     /**

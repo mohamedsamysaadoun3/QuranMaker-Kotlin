@@ -306,7 +306,12 @@ fun EngineActivity.createIAddQuran(): AddQuranFragment.IAddQuran {
         }
 
         override fun onAdd(str: String, str2: String, str3: String?, str4: String?, i: Int, i2: Int, str5: String, i3: Int, i4: Int) {
-            addEntity(str!!, "$str2 $i2", str3!!, str4!!, i, i2, str5!!, i3, i4)
+            // BEFORE: str3!! and str4!! threw NPE when null (Java String was nullable)
+            // WHY_CHANGED: splitAya() passes null for str3/str4 in many cases
+            // FIXED_BY: Use null-safe defaults instead of force unwrap
+            // REF: EngineActivity.java line 475 — Java passed null strings through
+            // VISUAL_IMPACT: Quran Add button no longer crashes silently, spinner stops
+            addEntity(str, "$str2 $i2", str3 ?: "", str4 ?: "", i, i2, str5, i3, i4)
         }
 
         override fun onDone(str: String, i: Int, str2: String?, uri: Uri?, str3: String?) {

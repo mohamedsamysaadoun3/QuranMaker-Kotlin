@@ -97,16 +97,17 @@
     <string name="all">All</string>
     <string name="post">Post</string>
     <string name="home">Done</string>
-    <string name="pro">Subscribe</string>
-    <string name="upgrade">Upgrade premium</string>
-    <string name="unlock_premium">Upgrade To Premium</string>
-    <string name="premium_activated">Premium Activated</string>
-    <string name="subscribe_now">Subscribe Now</string>
-    <string name="subscribe_now_l">Unlock All Features</string>
-    <string name="subscribe_now_last">Subscribe Now</string>
-    <string name="enjoy_all_premium_features">Unlock all premium features</string>
-    <string name="enjoy_all_premium_features_last">Enjoy all premium features</string>
-    <string name="do_want_delete_watermark">Remove watermark</string>
+    <!-- Premium strings kept for resource compatibility — billing removed -->
+    <string name="pro"></string>
+    <string name="upgrade"></string>
+    <string name="unlock_premium"></string>
+    <string name="premium_activated"></string>
+    <string name="subscribe_now"></string>
+    <string name="subscribe_now_l"></string>
+    <string name="subscribe_now_last"></string>
+    <string name="enjoy_all_premium_features"></string>
+    <string name="enjoy_all_premium_features_last"></string>
+    <string name="do_want_delete_watermark"></string>
     <string name="contact_us">Contact us</string>
     <string name="select_language">Select Language</string>
     <string name="choose_your_preferred_language">Choose your preferred language</string>

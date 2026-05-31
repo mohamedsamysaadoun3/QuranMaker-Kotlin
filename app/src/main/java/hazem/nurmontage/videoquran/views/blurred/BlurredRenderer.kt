@@ -191,13 +191,12 @@ fun BlurredImageView.onDrawExt(canvas: Canvas) {
                 }
 
                 // ── Overlays for non-GRADIENT/MASK_BRUSH/BLACK_LAYER/CASSET_IMG types ──
-                // Types like HEART, BATTERY, BLUE_TYPE always need drawIpad() because they
-                // render custom shapes instead of the standard progress bar.
-                if (this.bitmapSquare == null ||
-                    this.mIpadType == IpadType.HEART.ordinal ||
-                    this.mIpadType == IpadType.BATTERY.ordinal ||
-                    this.mIpadType == IpadType.BLUE_TYPE.ordinal
-                ) {
+                // BEFORE: bitmapSquare == null → drawIpad (INVERTED — caused thin-line bug)
+                // WHY_CHANGED: Reference draws iPad when bitmapSquare IS set, not when null
+                // FIXED_BY: Inverted the condition to match reference (BlurredImageView.smali line 4121)
+                // REF: BlurredImageView.java onDraw — if (bitmapSquare != null) drawIpad else drawProgress
+                // VISUAL_IMPACT: iPad frame now renders correctly instead of appearing as thin line
+                if (this.bitmapSquare != null) {
                     this.drawIpad(canvas, true)
                 } else {
                     this.drawProgressExt(canvas)

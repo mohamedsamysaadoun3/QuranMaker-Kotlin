@@ -1113,9 +1113,12 @@ fun BlurredImageView.drawIpad(canvas: Canvas, isFlag: Boolean) {
     when {
         this.mIpadType == IpadType.IPAD_CLASSIC.ordinal -> {
             canvas.drawRect(this.ipad_rect!!, this.paintIpad)
-            // Premium path: direct coordinate positioning for clean rendering
-            this.left_square = this.ipad_rect!!.centerX() - (this.bitmapSquare!!.width * 0.5f)
-            this.top_square = this.ipad_rect!!.top + (this.bitmapBlured!!.height * 0.02f)
+            // BEFORE: Premium path set coordinates but never drew the bitmap (thin-line bug)
+            // WHY_CHANGED: Reference calls drawBitmapWithShadow() here, not coordinate-only path
+            // FIXED_BY: Call drawBitmapWithShadow(canvas) to actually draw the iPad album art
+            // REF: BlurredImageView.java line 3315
+            // VISUAL_IMPACT: iPad frame now shows album art instead of empty rectangle
+            drawBitmapWithShadow(canvas)
             drawLectureExt(canvas)
             if (isFlag) {
                 drawProgressExt(canvas)
@@ -1137,9 +1140,12 @@ fun BlurredImageView.drawIpad(canvas: Canvas, isFlag: Boolean) {
         this.mIpadType == IpadType.IPAD.ordinal || this.mIpadType == IpadType.IPAD_UNBLUR.ordinal -> {
             val shadowRad = (min(this.ipad_rect!!.width(), this.ipad_rect!!.height()) * 0.03f).toInt()
             drawRectWithShadow(canvas, this.ipad_rect!!, ViewCompat.MEASURED_STATE_MASK, if (shadowRad <= 0) 1 else shadowRad, 0, 0, true)
-            // Premium path: direct coordinate positioning for clean rendering
-            this.left_square = this.ipad_rect!!.centerX() - (this.bitmapSquare!!.width * 0.5f)
-            this.top_square = this.ipad_rect!!.top + (this.bitmapBlured!!.height * 0.02f)
+            // BEFORE: Premium path set coordinates but never drew the bitmap (thin-line bug)
+            // WHY_CHANGED: Reference calls drawBitmapWithShadow() here for onDraw rendering
+            // FIXED_BY: Call drawBitmapWithShadow(canvas) to actually draw the iPad album art
+            // REF: BlurredImageView.java line 3325
+            // VISUAL_IMPACT: iPad frame now shows album art instead of empty rectangle
+            drawBitmapWithShadow(canvas)
             drawLectureExt(canvas)
             if (isFlag) {
                 drawProgressExt(canvas)
@@ -1147,8 +1153,12 @@ fun BlurredImageView.drawIpad(canvas: Canvas, isFlag: Boolean) {
         }
         this.mIpadType == IpadType.BOTTOM_RECT.ordinal -> {
             drawRectBottom(canvas, this.ipad_rect!!)
-            // Premium path: lossless save-quality bitmap drawing
-            drawBitmapWithShadowTypeBottomSave(canvas)
+            // BEFORE: Used Save variant (premium export path) instead of display path
+            // WHY_CHANGED: Reference's 2-param drawIpad uses drawBitmapWithShadowTypeBottom for display
+            // FIXED_BY: Use drawBitmapWithShadowTypeBottom for on-screen rendering
+            // REF: BlurredImageView.java line 3335
+            // VISUAL_IMPACT: Bottom-rect iPad renders correctly during editing
+            drawBitmapWithShadowTypeBottom(canvas)
             drawLectureExt(canvas)
             if (isFlag) {
                 drawProgressExt(canvas)
