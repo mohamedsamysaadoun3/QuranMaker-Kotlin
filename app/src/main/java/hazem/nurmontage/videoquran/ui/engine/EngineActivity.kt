@@ -7615,23 +7615,91 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
     }
 
     internal fun onChoiceBgResult(activityResult: ActivityResult) {
-        // TODO: implement
+        if (activityResult.resultCode != -1) return
+        val data = activityResult.data ?: return
+        if (Common.bitmap == null || Common.bitmap!!.isRecycled) return
+        try {
+            Common.bitmap = Bitmap.createScaledBitmap(
+                Common.bitmap!!, blurredImageView.getHeight(), blurredImageView.getHeight(), false
+            )
+            blurredImageView.bitmapOriginal = Common.bitmap
+            val cropTo16x9 = when (mTemplate!!.geTypeResize()) {
+                ResizeType.SOCIAL_STORY.ordinal -> BitmapCropper.cropTo9x16(
+                    blurredImageView.bitmapOriginal, blurredImageView.getW(), blurredImageView.getH()
+                )
+                ResizeType.SQUARE.ordinal -> BitmapCropper.cropTo1x1(
+                    blurredImageView.bitmapOriginal, blurredImageView.getW(), blurredImageView.getH()
+                )
+                else -> BitmapCropper.cropTo16x9(
+                    blurredImageView.bitmapOriginal, blurredImageView.getW(), blurredImageView.getH()
+                )
+            }
+            blurredImageView.bitmapBlured = UtilsBitmap.blur(this, cropTo16x9!!, 20, 1)
+            blurredImageView.invalidate()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     internal fun onCropResult(activityResult: ActivityResult) {
-        // TODO: implement
+        if (activityResult.resultCode == -1) {
+            val data = activityResult.data
+            if (data != null) {
+                mTemplate!!.x_square = data.getFloatExtra("x", 0.3f)
+                mTemplate!!.y_square = data.getFloatExtra("y", 0.4f)
+                mTemplate!!.width_square = data.getFloatExtra("w", 1.0f)
+                mTemplate!!.height_square = data.getFloatExtra("h", 0.5f)
+                blurredImageView.bitmapSquare = Common.bitmap
+                blurredImageView.rectSquare = Common.rect
+                blurredImageView.invalidate()
+            }
+        }
+        isToCrop = false
     }
 
     internal fun onImgResult(activityResult: ActivityResult) {
-        // TODO: implement
+        val data = activityResult.data ?: return
+        val uri = data.data ?: return
+        if (activityResult.resultCode != -1) return
+        handleImg(uri)
     }
 
     internal fun onVideoResult(activityResult: ActivityResult) {
-        // TODO: implement
+        val data = activityResult.data ?: return
+        val uri = data.data ?: return
+        if (activityResult.resultCode != -1) return
+        try {
+            contentResolver.takePersistableUriPermission(uri, 1)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        handleVideo(uri)
     }
 
     internal fun onVideoExtractResult(activityResult: ActivityResult) {
-        // TODO: implement
+        isToCrop = false
+        val data = activityResult.data ?: return
+        val uri = data.data ?: return
+        if (activityResult.resultCode != -1) return
+        try {
+            contentResolver.takePersistableUriPermission(uri, 1)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        try {
+            runOnUiThread { showProgress() }
+            mTemplate!!.uri_upload_extract_audio_video = uri.toString()
+            val copyFromUri = AudioUtils.copyFromUri(this, uri, mTemplate!!.folder_template!!)
+            if (copyFromUri != null) {
+                start_extenstion = 0
+                extractAudioFromVideoRecursive(copyFromUri, 0, false, 0)
+            } else {
+                runOnUiThread { hideProgressFragment() }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            runOnUiThread { hideProgressFragment() }
+        }
     }
 
 

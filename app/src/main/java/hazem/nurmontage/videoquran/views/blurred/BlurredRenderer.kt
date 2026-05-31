@@ -193,7 +193,13 @@ fun BlurredImageView.onDrawExt(canvas: Canvas) {
                 }
 
                 // ── Overlays for non-GRADIENT/MASK_BRUSH/BLACK_LAYER/CASSET_IMG types ──
-                if (this.bitmapSquare == null) {
+                // Types like HEART, BATTERY, BLUE_TYPE always need drawIpad() because they
+                // render custom shapes instead of the standard progress bar.
+                if (this.bitmapSquare == null ||
+                    this.mIpadType == IpadType.HEART.ordinal ||
+                    this.mIpadType == IpadType.BATTERY.ordinal ||
+                    this.mIpadType == IpadType.BLUE_TYPE.ordinal
+                ) {
                     this.drawIpad(canvas, true)
                 } else {
                     this.drawProgressExt(canvas)

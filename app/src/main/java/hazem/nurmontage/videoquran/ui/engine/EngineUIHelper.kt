@@ -921,6 +921,7 @@ fun EngineActivity.showExitDialog() {
         btnNo.setOnClickListener {
             LocalPersistence.deleteTemplate(this, Constants.TEMPLATE_TMP)
             cancelDialog()
+            startActivity(Intent(this, hazem.nurmontage.videoquran.ui.home.WorkUserActivity::class.java))
             finish()
         }
         val btnYes = inflate.findViewById<ButtonCustumFont>(R.id.dialog_yes)

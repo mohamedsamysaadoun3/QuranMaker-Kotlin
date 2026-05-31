@@ -64,6 +64,13 @@ fun EngineActivity.addAudio(uri: Uri) {
         } else {
             mPlayer!!.setDataSource(this, uri)
         }
+        mPlayer!!.setOnErrorListener { _, _, _ ->
+            runOnUiThread {
+                hideProgressFragment()
+                hideFragment()
+            }
+            true
+        }
         mPlayer!!.prepareAsync()
         mPlayer!!.setOnPreparedListener { mediaPlayer2 ->
             if (mediaPlayer2 == null) return@setOnPreparedListener
@@ -86,6 +93,13 @@ fun EngineActivity.addAudio(uri: Uri, list: List<String>, i: Int, str: String) {
         } else {
             mPlayer!!.setDataSource(this, uri)
         }
+        mPlayer!!.setOnErrorListener { _, _, _ ->
+            runOnUiThread {
+                hideProgressFragment()
+                hideFragment()
+            }
+            true
+        }
         mPlayer!!.prepareAsync()
         mPlayer!!.setOnPreparedListener { mediaPlayer2 ->
             if (mediaPlayer2 == null) return@setOnPreparedListener
@@ -107,6 +121,13 @@ fun EngineActivity.addAudioFromVideo(uri: Uri, str: String) {
             mPlayer!!.setDataSource(uri.toString())
         } else {
             mPlayer!!.setDataSource(this, uri)
+        }
+        mPlayer!!.setOnErrorListener { _, _, _ ->
+            runOnUiThread {
+                hideProgressFragment()
+                hideFragment()
+            }
+            true
         }
         mPlayer!!.prepareAsync()
         mPlayer!!.setOnPreparedListener { mediaPlayer2 ->
@@ -231,6 +252,10 @@ fun EngineActivity.addAudioRecitersFfmpeg(
                 addAudio(Uri.fromFile(file), list, -1, file2.absolutePath)
             } else {
                 android.util.Log.e("FFMPEG", "Failed: ${fFmpegSession.failStackTrace}")
+                runOnUiThread {
+                    hideProgressFragment()
+                    hideFragment()
+                }
             }
         }.sessionId
     )
@@ -588,6 +613,11 @@ fun EngineActivity.changeEntityAudio(i: Int, uri: Uri) {
                                 hideFragment()
                             }
                         }
+                    } else {
+                        runOnUiThread {
+                            hideProgressFragment()
+                            hideFragment()
+                        }
                     }
                 }
             }).sessionId)
@@ -746,6 +776,11 @@ fun EngineActivity.changeEntityAudioFromVideo(i: Int, uri: Uri, str: String) {
                                 hideProgressFragment()
                                 hideFragment()
                             }
+                        }
+                    } else {
+                        runOnUiThread {
+                            hideProgressFragment()
+                            hideFragment()
                         }
                     }
                 }
