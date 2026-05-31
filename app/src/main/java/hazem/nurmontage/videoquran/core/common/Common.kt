@@ -166,6 +166,10 @@ object Common {
         Gradient(-2039584, -331546, -1),
         Gradient(-5028051, -19559, -6708)
     )
-}
-    const val COLOR_TRANSLATION = -12345678
+
+    // ──────────────────────────────────────────────
+    //  Additional constants (from original Common.java)
+    // ──────────────────────────────────────────────
+    const val COLOR_TRANSLATION = -8780025
     const val TEMPLATE = "template"
+}

@@ -4,23 +4,62 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 
 /**
- * Simple waveform visualization view.
+ * Interactive waveform visualization view.
  *
- * Renders a placeholder waveform graphic. Used in the audio preview
- * screen (activity_ads_tuufah) to display before/after audio waveforms.
+ * Renders an amplitude-based waveform with progress tracking. Bars before
+ * the current progress position are drawn in white; bars after are drawn
+ * in dark gray. Touch/drag interaction allows the user to seek by tapping
+ * or sliding across the waveform.
  *
- * Originally part of the QuranMaker app, this stub preserves the
- * layout XML reference while providing basic drawing support.
+ * Ported from the original reverse-engineered Java implementation.
  */
 class WaveformView : View {
 
+    private var amplitudes: IntArray = intArrayOf(
+        30, 40, 60, 80, 50, 90, 100, 70, 40, 60, 80, 50, 30, 50, 70, 90, 60, 40
+    )
+
+    private var listener: OnWaveformClickListener? = null
+
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = -0x4e4e4f  // gray
-        style = Paint.Style.STROKE
-        strokeWidth = 2f
+        style = Paint.Style.FILL
+    }
+
+    private var progress: Float = 0f
+
+    interface OnWaveformClickListener {
+        fun onProgressChanged(progress: Float)
+    }
+
+    fun setOnWaveformClickListener(listener: OnWaveformClickListener) {
+        this.listener = listener
+    }
+
+    fun setProgress(progress: Float) {
+        this.progress = progress
+        invalidate()
+    }
+
+    fun setAmplitudes(amplitudes: IntArray) {
+        this.amplitudes = amplitudes
+        invalidate()
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_DOWN ||
+            event.action == MotionEvent.ACTION_MOVE
+        ) {
+            var x = event.x / width
+            x = x.coerceIn(0f, 1f)
+            setProgress(x)
+            listener?.onProgressChanged(x)
+            return true
+        }
+        return super.onTouchEvent(event)
     }
 
     constructor(context: Context) : super(context)
@@ -32,15 +71,24 @@ class WaveformView : View {
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val w = width.toFloat()
-        val h = height.toFloat()
-        val mid = h / 2f
-        // Draw simple placeholder waveform lines
-        val step = w / 20f
-        for (i in 0..19) {
-            val x = i * step + step / 2f
-            val amplitude = (Math.sin(i * 0.8) * mid * 0.6).toFloat()
-            canvas.drawLine(x, mid - amplitude, x, mid + amplitude, paint)
+        val viewWidth = width.toFloat()
+        val viewHeight = height.toFloat()
+        val barWidth = viewWidth / (amplitudes.size * 2)
+        val barPlusGapWidth = barWidth * 2
+
+        for (i in amplitudes.indices) {
+            val barHeight = (amplitudes[i] / 100.0f) * viewHeight
+            val x = i * barPlusGapWidth
+            val y = (viewHeight - barHeight) / 2f
+
+            val fraction = i.toFloat() / amplitudes.size
+            if (progress > 0f && fraction < progress) {
+                paint.color = -1           // white (0xFFFFFFFF) — played portion
+            } else {
+                paint.color = -12303292    // dark gray (0xFF444444) — unplayed portion
+            }
+
+            canvas.drawRoundRect(x, y, x + barWidth, y + barHeight, 5f, 5f, paint)
         }
     }
 }

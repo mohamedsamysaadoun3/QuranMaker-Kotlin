@@ -8,6 +8,7 @@
     <string name="bg">Bg</string>
     <string name="ipad">Ipod</string>
     <string name="delete">Delete</string>
+    <string name="dest_title">destination title</string>
     <string name="cut">Cut</string>
     <string name="edit">Edit</string>
     <string name="color">Color</string>
@@ -35,6 +36,7 @@
     <string name="about">About</string>
     <string name="help">Help</string>
     <string name="share">Share app</string>
+    <string name="share_mjs">"Assalamu alaykum! 📖✨ Discover NurMontage, the unique app that lets you design beautiful videos of the Holy Quran for social media. It\'s easy, creative, and a powerful way to share the message of the Quran. Download now: [ https://play.google.com/store/apps/details?id=hazem.nurmontage.videoquran] #Quran #Islam #NurMontage #CreativeEditing #MuslimApp"</string>
     <string name="rate">Rate us</string>
     <string name="exit">Exit...</string>
     <string name="leave">Leave</string>
@@ -100,7 +102,10 @@
     <string name="unlock_premium">Upgrade To Premium</string>
     <string name="premium_activated">Premium Activated</string>
     <string name="subscribe_now">Subscribe Now</string>
+    <string name="subscribe_now_l">Unlock All Features</string>
+    <string name="subscribe_now_last">Subscribe Now</string>
     <string name="enjoy_all_premium_features">Unlock all premium features</string>
+    <string name="enjoy_all_premium_features_last">Enjoy all premium features</string>
     <string name="do_want_delete_watermark">Remove watermark</string>
     <string name="contact_us">Contact us</string>
     <string name="select_language">Select Language</string>
@@ -111,7 +116,7 @@
     <string name="not_have_susbcribe">There is no subscription. Contact support.</string>
     <string name="nothing_to_restore">Nothing to Restore</string>
     <string name="msj_connection_on">Turn on the internet and then Retry.</string>
-    <string name="msj_no_found_subscribe">We couldn\'t find an active subscription linked to your Google Play account.</string>
+    <string name="msj_no_found_subscribe">"We couldn\'t find an active subscription linked to your Google Play account.If you recently subscribed, please make sure you\'re signed in with the correct account."</string>
     <string name="nurmontage_app">NurMontage app</string>
     <string name="edit_and_style">Edit and Style</string>
     <string name="enhance_voice">Enhance Voice</string>
@@ -135,6 +140,9 @@
     <string name="forever">%s / forever</string>
     <string name="no_commitment">SECURED BY GOOGLE - CANCEL ANY TIME</string>
     <string name="no_commitment_l">Cancel anytime - no penalties or fees.</string>
+    <string name="no_commitment_l_l">Subscribing gives you full access to all NurMontage features.You can manage or cancel your subscription anytime through Google Play.Your subscription is securely linked to your account and can be restored even if you delete the app or change your device.Subscription is optional, and you can continue using NurMontage with limited features.</string>
+    <string name="no_commitment_last">No commitment,cancel anytime</string>
+    <string name="no_commitment_lastt">Flexible plan — cancel anytime</string>
     <string name="no_thanks">No,Thanks</string>
     <string name="i_m_youtuber">I\'m Youtuber</string>
     <string name="dialog_billing_tittle">Free Version</string>
@@ -154,14 +162,25 @@
     <string name="openTuffah">Tuffah</string>
     <string name="nurmontage_means">Nurmontage meaning ?</string>
     <string name="this_begeing_idea">Simply, this is how the idea started!</string>
+    <string name="about_free_site">Free sites to download high-quality images and videos! 🚀</string>
+    <string name="about_free_site_desc">" &lt;b>&lt;font color=#F67280>Unsplash:&lt;/font>&lt;/b> A vast library of beautiful and free photographs.&lt;br>&lt;br> &lt;b>&lt;font color=#F67280>Pexels:&lt;/font>&lt;/b> Provides high-resolution photos and videos for commercial and personal use.&lt;br>&lt;br> &lt;b>&lt;font color=#F67280>Pixabay:&lt;/font>&lt;/b> Contains a large and diverse collection of images, illustrations, and videos.&lt;br>&lt;br> &lt;b>&lt;font color=#F67280>Videezy:&lt;/font>&lt;/b> Your destination for free high-quality video footage.&lt;br>&lt;br> Tip for the Muslim designer: When using these sites, search for keywords like nature, mosque, islamic, arabic, calligraphy, geometric patterns, and avoid images that may contain people in immodest clothing or symbols that conflict with Islamic values. "</string>
     <string name="about_free_app">Best 5 apps for montage the holy quran</string>
-    <string name="about_no_ads">Assalamu alaykum , your bro hazem ourari, the developer of the karmous and Asaloun app. I don\'t rely on ads in all my apps because it is difficult to control what they display.</string>
+    <string name="about_question_1">Are you passionate about the growth of Islamic apps?</string>
+    <string name="about_question_2">Do you appreciate creative ideas that serve the Islamic community?</string>
+    <string name="about_question_3">Would you like to spread the Holy Quran easily?</string>
+    <string name="about_dont_subscribe_why">"If you only use the app sometimes, the free version is perfect for you! You can easily create and share videos.&lt;br/>&lt;br/> When should you get a subscription?&lt;br/> We suggest subscribing if one or more of these apply to you:&lt;br/>&lt;br/> * You regularly post islamic content.&lt;br/> * You want to remove the watermark from your videos.&lt;br/> * You need to use a video as a background instead of a picture.&lt;br/> * You want full control over customizing the display screen.&lt;br/> * You plan to share on all social media platforms in different sizes.&lt;br/> * Or, if you simply want to support the app\'s development and help us keep making it better ❤️."</string>
+    <string name="this_begeing_idea_decp_last">"Back in 2021, I watched a YouTube video about how to design a picture with Quran verses using a phone. The method was like this: use an app for writing on photos (maybe Picsart, I don\'t remember) + a Quran app to copy verses and paste them into Picsart + search Google for Quran fonts and download them to Picsart (I think this feature was paid). Then you were ready to design and share a picture with Quran verses. It was a bit difficult.\n\nFrom this, the idea for Karmous App for Designing Quran Images was born – everything you need in one app: design tools + the complete Quran in the app. After that came Asaloun App for Designing Quran Videos, and now NurMontage, also for videos, but with popular templates chosen by users."</string>
+    <string name="this_begeing_idea_decp">" It all sparked from a passion back in 2021! I stumbled upon a YouTube tutorial on designing Quranic verse images using a phone. The process was quite a juggle: one app for image editing (maybe Picsart, I recall), another for copying verses, then hunting down and installing Quranic fonts – often a paid feature. I just knew there had to be a simpler, more inspiring way!&lt;br/>&lt;br/> That spark ignited the idea for Karmous Quranic Image Designer, bringing everything together: powerful design tools and the complete Quran, all in one app.&lt;br/>&lt;br/> The dream grew with Asaloun Quranic Video Designer, and now, we\'re thrilled to introduce NurMontage! It makes video creation a breeze with ready-to-use templates, inspired by the amazing things our users request and create. It\'s an ongoing journey of creativity, all for you! "</string>
+    <string name="about_help_body">" &lt;b>What are the benefits of a Premium subscription?&lt;/b>&lt;br/> A Premium subscription unlocks exclusive features like no watermarks,upload video and image, export videos in 16:9,1:1..., iPod screen edit, and gradient colors. Plus, it supports our ongoing development!&lt;br/>&lt;br/> &lt;b>How do I subscribe to NurMontage Premium?&lt;/b>&lt;br/> You can subscribe right from the app by going to Upgrade in the settings.&lt;br/>&lt;br/> &lt;b>How do I cancel my subscription?&lt;/b>&lt;br/> You can manage and cancel your subscription through your device\'s app store settings (Google Play subscriptions). Your Premium features will remain active until the end of your current billing cycle.&lt;br/>&lt;br/> &lt;b>What payment methods are accepted?&lt;/b>&lt;br/> Payments are securely processed through your device\'s app store (Google Play), which usually accepts major credit cards and other local payment options.&lt;br/>&lt;br/> &lt;b>Can I use the same subscription on a new phone or tablet?&lt;/b>&lt;br/> Yes, you can! Just sign in to Google Play on your new phone with the same Google account you used to subscribe. Then, go to the subscription page in our app, and it should automatically recognize your subscription and restore it.&lt;br/>&lt;br/> &lt;b>Who do I contact if I have issues?&lt;/b>&lt;br/> For any problems, suggestions, or subscription questions, please contact this email:&lt;br/> hazemourari08@gmail.com "</string>
+    <string name="nurmontage_means_descrp">"Create and share beautiful, special videos of the Holy Quran. 'Nur' is like the Quran itself...and 'Montage' is our creative way to show that light to the world!."</string>
+    <string name="help_me_help_you_descrp">"Support NurMontage, and In shaa Allah, I'll keep delivering the relaxing, high-quality experience you love, without any Ads."</string>
+    <string name="about_no_ads">"Assalamu alaykum , your bro hazem ourari, the developer of the karmous and Asaloun app. I don't rely on ads in all my apps because it is difficult to control what they display. There is what is haram in them, but there is also what is halal, and this application will be completely free."</string>
     <string name="about_help_tittle">Questions ?</string>
     <string name="about_dont_subscribe">Is the free version enough for you?</string>
     <string name="about_cost_explanation">The current cost is the time and expertise to develop and improve the application. Your support allows me to dedicate my skills and passion to provide you with a unique experience.</string>
     <string name="help_me_help_you">Help me help you</string>
     <string name="donate_hint">You Support NurMontage %s !</string>
-    <string name="thanks_hint">All features unlocked, JazakAllah khair for your gift.</string>
+    <string name="thanks_hint">"All features unlocked,JazakAllah khair for your gift. Incha\'Allah, we will provide you with the best.Thank you for your support 🎉"</string>
     <string name="choice_screen_ipod">iPod screen selection</string>
     <string name="to">To</string>
     <string name="language_changed">Language changed successfully</string>
@@ -170,8 +189,8 @@
     <string name="text">Text</string>
     <string name="search_pixabay">Search Pixabay</string>
     <string name="search_hint_pixabay">Search images on Pixabay</string>
-    <string name="_4_8_434_reviews_28k_users">4.8 (434 reviews, 28k users)</string>
-    <string name="msj_send_lnk">Send link</string>
+    <string name="_4_8_434_reviews_28k_users">⭐ 4.8 (434 reviews) • 28K+ users</string>
+    <string name="msj_send_lnk">"🎥 Are you a content creator with over 1,000 followers? Whether you\'re on YouTube, Instagram, TikTok, or have a blog — if you\'ve made a tutorial or shared tips about our app, we\'d love to feature you! ✉️ Send us your link, and we\'ll proudly showcase your content inside the app."</string>
 
     <string-array name="fps_labels">
         <item>15</item>

@@ -29,7 +29,7 @@ import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
-// import androidx.activity.EdgeToEdge  // Not available in current dependency
+import androidx.activity.EdgeToEdge
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
@@ -175,33 +175,199 @@ class EngineActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        EdgeToEdge.enable(this)
         setContentView(R.layout.activity_time_line)
 
-        mResources = resources
+        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+        val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+        insetsController.isAppearanceLightStatusBars = false
+        insetsController.isAppearanceLightNavigationBars = false
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { view, windowInsetsCompat ->
+            val insets = windowInsetsCompat.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+            windowInsetsCompat
+        }
 
-        // Load or create template
-        val projectPath = intent.getStringExtra("project_path")
-        if (projectPath != null) {
-            mTemplate = LocalPersistence.readObjectFromFile(this, projectPath) as? Template
-        }
-        if (mTemplate == null) {
-            mTemplate = LocalPersistence.readObjectFromFile(this, Constants.TEMPLATE_TMP) as? Template
-        }
-        if (mTemplate == null) {
-            mTemplate = Template().apply {
-                uri_bg = "android.resource://$packageName/drawable/bg_19"
-                name_drawable = "bg_19"
-                val size = AspectRatioCalculator.getSize(resizeType, resolution)
-                setWidthAndHeight(size.first, size.second)
-            }
-        }
+        mResources = resources
+        setStatusBarColor(-15658735)
+        setNavigationBarColor(-14935010)
+        wakeLockAcquire()
+        showProgress()
+        loadTemplate()
+
+        vibrationHelper = MyVibrationHelper(this)
 
         // Initialize the engine UI (order matters: timeline first, then views)
         initTimeLineView()
         initViews()
 
-        // Register back-press handler
-        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+        checkUriShared()
+    }
+
+    // ──────────────────────────────────────────────
+    //  Lifecycle overrides
+    // ──────────────────────────────────────────────
+
+    override fun onPause() {
+        super.onPause()
+        try {
+            if (isSaveTmpTemplate) {
+                saveTemplateTmp()
+            }
+            if (isToCrop) {
+                return
+            }
+            iTrimLineCallback.onEmptySelect()
+            cancelDialog()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isToCrop = false
+        isSaveTmpTemplate = true
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            Glide.get(this).clearMemory()
+        } catch (_: Exception) {
+        }
+        clearFFmpeg()
+        releaseWakeLock()
+        clearCallback()
+        pausePlayer()
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.onAttach(newBase))
+    }
+
+    // ──────────────────────────────────────────────
+    //  Template loading
+    // ──────────────────────────────────────────────
+
+    private fun loadTemplate() {
+        var template = LocalPersistence.readObjectFromFile(this, Constants.TEMPLATE_TMP) as? Template
+        mTemplate = template
+        if (template == null && intent != null) {
+            val templatePath = intent.getStringExtra(Constants.TEMPLATE)
+            if (templatePath != null) {
+                val template2 = LocalPersistence.readObjectFromFile(this, templatePath) as? Template
+                mTemplate = template2
+                if (template2 != null) {
+                    if (template2.name_drawable != null) {
+                        uri_bg = "android.resource://$packageName/drawable/${DrawableHelper.getIDDrawableByName(template2.name_drawable!!)}"
+                    } else {
+                        uri_bg = template2.uri_bg
+                    }
+                    if (template2.width < 1 || template2.height < 1) {
+                        template2.setWidthAndHeight(720, 1280)
+                    }
+                }
+            }
+        }
+        val template3 = mTemplate
+        if (template3 == null) {
+            mTemplate = Template()
+            val imgBg = intent.getStringExtra("img_bg")
+            uri_bg = imgBg
+            if (imgBg != null) {
+                mTemplate!!.uri_bg = imgBg
+            } else {
+                val randomEntry = DrawableHelper.getRandomDrawableEntry()
+                val bgUri = "android.resource://$packageName/drawable/${randomEntry.value}"
+                uri_bg = bgUri
+                mTemplate!!.uri_bg = bgUri
+                mTemplate!!.name_drawable = randomEntry.key
+            }
+            mTemplate!!.setWidthAndHeight(720, 1280)
+        } else {
+            if (template3.name_drawable != null) {
+                uri_bg = "android.resource://$packageName/drawable/${DrawableHelper.getIDDrawableByName(template3.name_drawable!!)}"
+            } else {
+                uri_bg = template3.uri_bg
+            }
+            if (template3.width < 1 || template3.height < 1) {
+                template3.setWidthAndHeight(720, 1280)
+            }
+        }
+        val file = FileUtils.getFile(applicationContext)
+        if (file != null) {
+            mTemplate!!.folder_template = file.absolutePath
+        }
+    }
+
+    private fun checkUriShared() {
+        val stringExtra = intent.getStringExtra("muri")
+        if (stringExtra != null) {
+            addUriAudioToQuranFragment(Uri.parse(stringExtra), null)
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    //  Player helpers
+    // ──────────────────────────────────────────────
+
+    private fun pausePlayer() {
+        try {
+            hideLayoutResolution()
+            if (mIsPlaying) {
+                mIsPlaying = false
+                pauseTimelineAnimation()
+                trackViewEntity.isPlaying = mIsPlaying
+                blurredImageView.isPlaying = mIsPlaying
+                trackViewEntity.invalidate()
+                for (entityAudio in trackViewEntity.entityListAudio) {
+                    try {
+                        if (entityAudio.mediaPlayer != null && entityAudio.mediaPlayer!!.isPlaying) {
+                            entityAudio.mediaPlayer!!.pause()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                if (::btnPlayPause.isInitialized) {
+                    btnPlayPause.setImageResource(R.drawable.play_btn)
+                }
+                stop()
+            }
+            trackViewEntity.pauseScroll()
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            window.clearFlags(0x00000400) // FLAG_KEEP_SCREEN_ON
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun clearFFmpeg() {
+        for (id in id_ffmpeg) {
+            FFmpegKit.cancel(id)
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    //  URI audio helper
+    // ──────────────────────────────────────────────
+
+    private fun addUriAudioToQuranFragment(uri: Uri, textValue: String?) {
+        try {
+            val beginTransaction = supportFragmentManager.beginTransaction()
+            mCurrentFragment = AddQuranFragment.getInstance(iAddQuran, mResources!!, uri, textValue ?: "", "-")
+            beginTransaction.replace(R.id.m_container, mCurrentFragment!!)
+            beginTransaction.commit()
+            runOnUiThread {
+                setupShowFragment(mResources!!.getString(R.string.quran))
+            }
+        } catch (_: Exception) {
+        }
     }
 
     // Helper functions to break recursive type inference at getInstance call sites
@@ -464,7 +630,13 @@ class EngineActivity : BaseActivity() {
 
     private val iAddQuran: AddQuranFragment.IAddQuran = object : AddQuranFragment.IAddQuran {
         override fun onBismilah() {
-            blurredImageView.addBismilahEntity(BismilahEntity("بسم الله الرحمن الرحيم", RectF(), Typeface.DEFAULT, -1))
+            val addEntityIste3adha = addEntityIste3adha()
+            val addEntityBissmilah = addEntityBissmilah()
+            if (!addEntityIste3adha || !addEntityBissmilah) {
+                trackViewEntity.translateToRight(addEntityIste3adha)
+            } else {
+                trackViewEntity.translateToRight()
+            }
         }
 
         override fun onVuCopyRight() {
@@ -2425,7 +2597,7 @@ private fun iniTypeImg() {
             }
             blurredImageView.clr_trsl = clrTrsl
             blurredImageView.clr_aya = blurredImageView.paintLecture.color
-            addEntityFromTemplate(EntityQuranTemplate())
+            addEntityFromTemplate()
         } catch (e: Exception) {
             Log.e("Tag : ", "init ${e.message}")
         }
@@ -7267,30 +7439,131 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
 
     private fun cancelDialog() {
         try {
-            if (mIsPlaying) {
-                stop()
+            val d = dialog
+            if (d != null && d.isShowing) {
+                d.dismiss()
             }
+            dialog = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun cancelDialogInternet() {
+        try {
+            val d = dialogInternet
+            if (d != null && d.isShowing) {
+                d.dismiss()
+            }
+            dialogInternet = null
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     private fun toProVersion() {
+        // Billing removed - pro version is always unlocked
+        // Originally navigated to ProVersionActivity; now a no-op
+    }
+
+    private fun showExitDialog() {
         try {
-            dialogPremium(0)
+            isSaveTmpTemplate = false
+            pausePlayer()
+            val d = Dialog(this)
+            dialog = d
+            d.setCancelable(true)
+            dialog!!.requestWindowFeature(1)
+            dialog!!.window!!.setLayout(-1, -2)
+            dialog!!.window!!.setBackgroundDrawable(ColorDrawable(0))
+            val inflate = LayoutInflater.from(this).inflate(R.layout.layout_dialog, null as ViewGroup?)
+            dialog!!.setContentView(inflate)
+            inflate.findViewById<TextCustumFont>(R.id.dialog_title).text = mResources!!.getString(R.string.exit)
+            inflate.findViewById<TextCustumFont>(R.id.dialog_message).text = mResources!!.getString(R.string.are_you_sure_want_to_leave_this_work)
+            val btnNo = inflate.findViewById<ButtonCustumFont>(R.id.dialog_no)
+            btnNo.text = mResources!!.getString(R.string.leave)
+            btnNo.setOnClickListener {
+                LocalPersistence.deleteTemplate(this@EngineActivity, Constants.TEMPLATE_TMP)
+                cancelDialog()
+                finish()
+            }
+            val btnYes = inflate.findViewById<ButtonCustumFont>(R.id.dialog_yes)
+            btnYes.text = mResources!!.getString(R.string.Continue)
+            btnYes.setOnClickListener {
+                cancelDialog()
+            }
+            dialog!!.show()
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    private fun showExitDialog() {
+    fun dialogNoInternet(uri: Uri) {
         try {
-            val builder = android.app.AlertDialog.Builder(this)
-            builder.setTitle("")
-            builder.setMessage("")
-            builder.setPositiveButton("") { _, _ -> finish() }
-            builder.setNegativeButton("") { dialog, _ -> dialog.dismiss() }
-            builder.show()
+            val d = Dialog(this)
+            dialogInternet = d
+            d.setCancelable(false)
+            dialogInternet!!.requestWindowFeature(1)
+            dialogInternet!!.window!!.setLayout(-1, -2)
+            dialogInternet!!.window!!.setBackgroundDrawable(ColorDrawable(0))
+            val inflate = LayoutInflater.from(this).inflate(R.layout.layout_dialog, null as ViewGroup?)
+            dialogInternet!!.setContentView(inflate)
+            inflate.findViewById<TextCustumFont>(R.id.dialog_title).text = mResources!!.getString(R.string.no_connection)
+            inflate.findViewById<TextCustumFont>(R.id.dialog_message).text = mResources!!.getString(R.string.msj_connection_on)
+            val btnNo = inflate.findViewById<ButtonCustumFont>(R.id.dialog_no)
+            btnNo.text = mResources!!.getString(R.string.ignore)
+            btnNo.setOnClickListener {
+                cancelDialogInternet()
+                hideProgressFragment()
+            }
+            val btnYes = inflate.findViewById<ButtonCustumFont>(R.id.dialog_yes)
+            btnYes.text = mResources!!.getString(R.string.retry)
+            btnYes.setOnClickListener {
+                if (NetworkUtils.isNetworkAvailable(this@EngineActivity)) {
+                    cancelDialogInternet()
+                    addAudioTemplateHttp(uri, 0, null)
+                }
+            }
+            dialogInternet!!.show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun dialogNoInternetList(list: List<String>) {
+        try {
+            val d = Dialog(this)
+            dialogInternet = d
+            d.setCancelable(false)
+            dialogInternet!!.requestWindowFeature(1)
+            dialogInternet!!.window!!.setLayout(-1, -2)
+            dialogInternet!!.window!!.setBackgroundDrawable(ColorDrawable(0))
+            val inflate = LayoutInflater.from(this).inflate(R.layout.layout_dialog, null as ViewGroup?)
+            dialogInternet!!.setContentView(inflate)
+            inflate.findViewById<TextCustumFont>(R.id.dialog_title).text = mResources!!.getString(R.string.no_connection)
+            inflate.findViewById<TextCustumFont>(R.id.dialog_message).text = mResources!!.getString(R.string.msj_connection_on)
+            val btnNo = inflate.findViewById<ButtonCustumFont>(R.id.dialog_no)
+            btnNo.text = mResources!!.getString(R.string.ignore)
+            btnNo.setOnClickListener {
+                runOnUiThread {
+                    trackViewEntity.invalidate()
+                    updateTime()
+                    if (mTemplate!!.quranEntityList.isEmpty()) {
+                        blurredImageView.invalidate()
+                    }
+                    cancelDialogInternet()
+                    hideProgressFragment()
+                }
+            }
+            val btnYes = inflate.findViewById<ButtonCustumFont>(R.id.dialog_yes)
+            btnYes.text = mResources!!.getString(R.string.retry)
+            btnYes.setOnClickListener {
+                if (NetworkUtils.isNetworkAvailable(this@EngineActivity)) {
+                    cancelDialogInternet()
+                    addAudioRecitersTemplate(list, 0, null)
+                }
+            }
+            dialogInternet!!.show()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -7317,12 +7590,209 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
     }
 
 
+    // 3-param overload kept for compatibility; the main logic is in the 2-param version above
     private fun addUriAudioToQuranFragment(uri: Uri, str: String, i: Int) {
-        // TODO: implement
+        addUriAudioToQuranFragment(uri, str)
     }
 
-    private fun addEntityFromTemplate(entityQuranTemplate: EntityQuranTemplate) {
-        // TODO: implement
+    private fun addEntityFromTemplate() {
+        val template = mTemplate ?: return
+        val isEnabled = template.ipad_type == IpadType.GRADIENT.ordinal ||
+                template.ipad_type == IpadType.MASK_BRUSH.ordinal ||
+                template.ipad_type == IpadType.BLACK_LAYER.ordinal
+        val loadFontFromAsset = UtilsFileLast.loadFontFromAsset(this, "fonts/arabic/خط فارس الكوفي.otf")
+        val createFromAsset = Typeface.createFromAsset(resources.assets, "fonts/ReadexPro_Medium.ttf")
+
+        for (entityQuranTemplate in template.quranEntityList) {
+            addEntity(
+                entityQuranTemplate.aya!!,
+                entityQuranTemplate.complete_aya!!,
+                entityQuranTemplate.translation,
+                entityQuranTemplate.translation_complete,
+                entityQuranTemplate.left,
+                entityQuranTemplate.right,
+                entityQuranTemplate.indexNumber,
+                entityQuranTemplate.number,
+                entityQuranTemplate.color,
+                entityQuranTemplate.name_font,
+                entityQuranTemplate.transition,
+                isEnabled,
+                entityQuranTemplate.icon,
+                entityQuranTemplate.startWord_index,
+                entityQuranTemplate.endWord_index,
+                entityQuranTemplate.scale,
+                entityQuranTemplate.factor_size,
+                entityQuranTemplate.factor_sizeTrl,
+                RectF(
+                    entityQuranTemplate.rectF!!.l,
+                    entityQuranTemplate.rectF!!.t,
+                    entityQuranTemplate.rectF!!.r,
+                    entityQuranTemplate.rectF!!.b
+                ),
+                loadFontFromAsset,
+                createFromAsset,
+                entityQuranTemplate.colorTrsl,
+                entityQuranTemplate.preset
+            )
+        }
+
+        for (translationTemplate in template.translationTemplateList) {
+            addEntityTrsl(
+                translationTemplate.aya!!,
+                translationTemplate.left,
+                translationTemplate.right,
+                translationTemplate.number,
+                translationTemplate.color,
+                translationTemplate.name_font,
+                translationTemplate.transition,
+                translationTemplate.scale,
+                translationTemplate.factor_size,
+                RectF(
+                    translationTemplate.rectF!!.l,
+                    translationTemplate.rectF!!.t,
+                    translationTemplate.rectF!!.r,
+                    translationTemplate.rectF!!.b
+                ),
+                translationTemplate.preset,
+                translationTemplate.clr_bg,
+                translationTemplate.isHaveBg
+            )
+        }
+
+        if (template.entityIsti3adaTemplate != null) {
+            addEntityIsti3ada(
+                template.entityIsti3adaTemplate!!.aya!!,
+                template.entityIsti3adaTemplate!!.left,
+                template.entityIsti3adaTemplate!!.right,
+                template.entityIsti3adaTemplate!!.color,
+                template.entityIsti3adaTemplate!!.transition,
+                template.entityIsti3adaTemplate!!.scale,
+                template.entityIsti3adaTemplate!!.factor_size,
+                RectF(
+                    template.entityIsti3adaTemplate!!.rectF!!.l,
+                    template.entityIsti3adaTemplate!!.rectF!!.t,
+                    template.entityIsti3adaTemplate!!.rectF!!.r,
+                    template.entityIsti3adaTemplate!!.rectF!!.b
+                ),
+                template.entityIsti3adaTemplate!!.preset
+            )
+        }
+
+        if (template.entityBismilahTemplate != null) {
+            addEntityBissmilah(
+                template.entityBismilahTemplate!!.aya!!,
+                template.entityBismilahTemplate!!.left,
+                template.entityBismilahTemplate!!.right,
+                template.entityBismilahTemplate!!.color,
+                template.entityBismilahTemplate!!.transition,
+                template.entityBismilahTemplate!!.scale,
+                template.entityBismilahTemplate!!.factor_size,
+                RectF(
+                    template.entityBismilahTemplate!!.rectF!!.l,
+                    template.entityBismilahTemplate!!.rectF!!.t,
+                    template.entityBismilahTemplate!!.rectF!!.r,
+                    template.entityBismilahTemplate!!.rectF!!.b
+                ),
+                template.entityBismilahTemplate!!.preset
+            )
+        }
+
+        if (template.entitySurahTemplate != null) {
+            val rectF: RectF = if (template.entitySurahTemplate!!.rectF == null) {
+                blurredImageView.rectFSurahName ?: RectF()
+            } else {
+                RectF(
+                    template.entitySurahTemplate!!.rectF!!.l * blurredImageView.getmCanvas_width(),
+                    template.entitySurahTemplate!!.rectF!!.t * blurredImageView.getmCanvas_height(),
+                    template.entitySurahTemplate!!.rectF!!.r * blurredImageView.getmCanvas_width(),
+                    template.entitySurahTemplate!!.rectF!!.b * blurredImageView.getmCanvas_height()
+                )
+            }
+            blurredImageView.setSurahNameEntity(
+                template.entitySurahTemplate!!.name,
+                template.entitySurahTemplate!!.reader,
+                rectF,
+                template.entitySurahTemplate!!.factor_scale,
+                template.entitySurahTemplate!!.name_font ?: "خط الإبل.otf",
+                template.entitySurahTemplate!!.clr,
+                template.entitySurahTemplate!!.preset,
+                template.entitySurahTemplate!!.style,
+                template.entitySurahTemplate!!.index_surah,
+                template.entitySurahTemplate!!.isHaveBg,
+                if (template.entitySurahTemplate!!.clrBg == 0) ViewCompat.MEASURED_STATE_MASK else template.entitySurahTemplate!!.clrBg
+            )
+        }
+
+        if (template.entityMediaList.isNotEmpty()) {
+            try {
+                val entityMedia = template.entityMediaList[0]
+                if (entityMedia.video_path != null) {
+                    if (template.uri_upload_extract_audio_video == null) {
+                        runOnUiThread {
+                            hideProgressFragment()
+                        }
+                    } else {
+                        AudioUtils.copyToLocalAsync(
+                            this,
+                            Uri.parse(template.uri_upload_extract_audio_video).toString(),
+                            template.folder_template!!,
+                            object : AudioUtils.Callback {
+                                override fun onSuccess(textValue: String) {
+                                    entityMedia.video_path = textValue
+                                    if (template.extension != null) {
+                                        addAudioFromVideoWithExtention(template.extension!!, entityMedia.video_path!!, 0)
+                                    } else {
+                                        start_extenstion = 0
+                                        extractAudioFromVideoRecursive(entityMedia.video_path!!, 0, true, 0)
+                                    }
+                                }
+
+                                override fun onError(exc: Exception) {
+                                    exc.printStackTrace()
+                                }
+                            }
+                        )
+                    }
+                } else if (entityMedia.uri != null) {
+                    if (entityMedia.paths_https != null) {
+                        if (NetworkUtils.isNetworkAvailable(this)) {
+                            addAudioRecitersTemplate(entityMedia.paths_https!!, 0, null)
+                        } else {
+                            runOnUiThread {
+                                dialogNoInternetList(entityMedia.paths_https!!)
+                            }
+                        }
+                    } else if (entityMedia.uri!!.contains("http")) {
+                        val parse = Uri.parse(entityMedia.uri)
+                        if (NetworkUtils.isNetworkAvailable(this)) {
+                            addAudioTemplateHttp(parse, 0, null)
+                        } else {
+                            runOnUiThread {
+                                dialogNoInternet(parse)
+                            }
+                        }
+                    } else {
+                        addAudioTemplateHttp(Uri.parse(entityMedia.uri), 0, null)
+                    }
+                }
+                return
+            } catch (e: Exception) {
+                e.printStackTrace()
+                runOnUiThread {
+                    hideProgressFragment()
+                }
+                return
+            }
+        }
+
+        runOnUiThread {
+            trackViewEntity.invalidate()
+            updateTime()
+            if (template.quranEntityList.isEmpty()) {
+                blurredImageView.invalidate()
+            }
+            hideProgressFragment()
+        }
     }
 
     private fun initTypeVideo() {
@@ -7330,7 +7800,7 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
     }
 
     private val isSubscribed: Boolean
-        get() = true // Billing removed - all features unlocked
+        get() = MyPreferences.isProVersion()
 
     private lateinit var seekbar_fps: CustomDiscreteSeekBar
     private lateinit var seekbar_resolution: CustomDiscreteSeekBar

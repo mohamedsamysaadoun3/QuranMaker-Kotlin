@@ -1,78 +1,190 @@
 package hazem.nurmontage.videoquran.ui.settings
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import hazem.nurmontage.videoquran.views.ButtonCustumFont
 import android.view.View
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
+import android.widget.ImageView
+import android.widget.RelativeLayout
+import androidx.activity.EdgeToEdge
+import androidx.activity.OnBackPressedCallback
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import hazem.nurmontage.videoquran.R
+import hazem.nurmontage.videoquran.core.base.BaseActivity
 import hazem.nurmontage.videoquran.databinding.ActivityChoiceLangBinding
+import hazem.nurmontage.videoquran.ui.engine.EngineActivity
+import hazem.nurmontage.videoquran.ui.home.WorkUserActivity
+import hazem.nurmontage.videoquran.ui.splash.FullscreenActivity
 import hazem.nurmontage.videoquran.utils.LocaleHelper
 
 /**
- * Language selection activity — Arabic / English.
+ * Language selection activity — faithful port of original ChoiceLangActivity.java.
  *
- * Clean version — directly connected to [LocaleHelper] for
- * persisting and applying the language change.
+ * Allows the user to choose between Arabic and English.
+ *
+ * Features:
+ * - `from_setting` extra handling: routes back to SeettingActivity when coming from settings
+ * - Uses original radio_selected/radio_unselected drawables
+ * - On confirm: persists language, recreates activity, and navigates appropriately
+ * - On cancel: navigates based on from_setting flag and existing templates
+ *
+ * EdgeToEdge and LocaleHelper attached.
  */
-class ChoiceLangActivity : AppCompatActivity() {
+class ChoiceLangActivity : BaseActivity() {
 
     private lateinit var binding: ActivityChoiceLangBinding
-    private var selectedLanguage: String = LocaleHelper.getLanguage(this)
+
+    private var isFromSetting = false
+    private var lang = "en"
+    private var isEnglishSelected = true
+
+    private val onBackPressedCallback = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            toStartWork()
+        }
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.onAttach(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        EdgeToEdge.enable(this)
         binding = ActivityChoiceLangBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
 
-        updateSelectionUI()
-        setupClickListeners()
+        setStatusBarColor(ViewCompat.MEASURED_STATE_MASK)
+        setNavigationBarColor(ViewCompat.MEASURED_STATE_MASK)
+
+        val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+        insetsController.isAppearanceLightStatusBars = false
+        insetsController.isAppearanceLightNavigationBars = false
+
+        // Read from_setting flag
+        if (intent != null) {
+            isFromSetting = intent.getBooleanExtra("from_setting", false)
+        }
+
+        initViews()
     }
 
-    private fun updateSelectionUI() {
-        if (selectedLanguage == "ar") {
-            binding.layoutArabic.background = ContextCompat.getDrawable(this, R.drawable.bg_item_selected)
-            binding.layoutEnglish.background = ContextCompat.getDrawable(this, R.drawable.bg_item_unselected)
+    private fun initViews() {
+        val layoutEnglish: RelativeLayout = binding.layoutEnglish
+        val layoutArabic: RelativeLayout = binding.layoutArabic
+        val radioEnglish: ImageView = binding.radioEnglish
+        val radioArabic: ImageView = binding.radioArabic
+
+        // Set button texts from resources
+        binding.btnConfirm.text = resources.getString(R.string.confirm)
+        binding.tvCancel.text = resources.getString(R.string.cancel)
+        binding.tvTittle.text = resources.getString(R.string.select_language)
+        binding.tvSubTittle.text = resources.getString(R.string.choose_your_preferred_language)
+
+        // Set initial selection based on current language
+        if ("ar" == LocaleHelper.getLanguage(this)) {
+            isEnglishSelected = false
+            layoutEnglish.setBackgroundResource(R.drawable.bg_item_unselected)
+            layoutArabic.setBackgroundResource(R.drawable.bg_item_selected)
+            radioArabic.setBackgroundResource(R.drawable.radio_selected)
+            radioEnglish.setBackgroundResource(R.drawable.radio_unselected)
         } else {
-            binding.layoutEnglish.background = ContextCompat.getDrawable(this, R.drawable.bg_item_selected)
-            binding.layoutArabic.background = ContextCompat.getDrawable(this, R.drawable.bg_item_unselected)
+            isEnglishSelected = true
+            layoutEnglish.setBackgroundResource(R.drawable.bg_item_selected)
+            layoutArabic.setBackgroundResource(R.drawable.bg_item_unselected)
+            radioEnglish.setBackgroundResource(R.drawable.radio_selected)
+            radioArabic.setBackgroundResource(R.drawable.radio_unselected)
+        }
+
+        // English layout click
+        layoutEnglish.setOnClickListener {
+            isEnglishSelected = true
+            radioEnglish.setBackgroundResource(R.drawable.radio_selected)
+            radioArabic.setBackgroundResource(R.drawable.radio_unselected)
+            layoutEnglish.setBackgroundResource(R.drawable.bg_item_selected)
+            layoutArabic.setBackgroundResource(R.drawable.bg_item_unselected)
+        }
+
+        // Arabic layout click
+        layoutArabic.setOnClickListener {
+            isEnglishSelected = false
+            radioEnglish.setBackgroundResource(R.drawable.radio_unselected)
+            radioArabic.setBackgroundResource(R.drawable.radio_selected)
+            layoutArabic.setBackgroundResource(R.drawable.bg_item_selected)
+            layoutEnglish.setBackgroundResource(R.drawable.bg_item_unselected)
+        }
+
+        // Confirm button
+        binding.btnConfirm.setOnClickListener {
+            lang = if (isEnglishSelected) "en" else "ar"
+            startLanguageChange()
+        }
+
+        // Cancel text
+        binding.tvCancel.setOnClickListener {
+            toStartWork()
         }
     }
 
-    private fun setupClickListeners() {
-        binding.layoutEnglish.setOnClickListener {
-            selectedLanguage = "en"
-            updateSelectionUI()
-        }
+    /**
+     * Navigate based on current state:
+     * - If from settings → go to SeettingActivity
+     * - Otherwise, check for existing templates and route accordingly
+     */
+    private fun toStartWork() {
+        val intent: Intent
+        val sharedPreferences = getSharedPreferences("Template", 0)
 
-        binding.layoutArabic.setOnClickListener {
-            selectedLanguage = "ar"
-            updateSelectionUI()
-        }
-
-        binding.btnConfirm.setOnClickListener {
-            if (selectedLanguage != LocaleHelper.getLanguage(this)) {
-                LocaleHelper.setLocale(selectedLanguage)
-                LocaleHelper.userIsChoice(this)
-
-                // Recreate the activity to apply the new locale
-                recreate()
-                Toast.makeText(this, R.string.language_changed, Toast.LENGTH_SHORT).show()
-
-                // Restart the app to apply locale everywhere
-                val intent = packageManager.getLaunchIntentForPackage(packageName)
-                intent?.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK or
-                    android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(intent)
+        if (isFromSetting) {
+            intent = Intent(this, SeettingActivity::class.java)
+        } else {
+            val all = sharedPreferences.all
+            if (all != null && all.isNotEmpty()) {
+                intent = Intent(this, WorkUserActivity::class.java)
             } else {
-                finish()
+                intent = Intent(this, EngineActivity::class.java)
             }
         }
 
-        binding.tvCancel.setOnClickListener {
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+            Intent.FLAG_ACTIVITY_CLEAR_TASK or
+            Intent.FLAG_ACTIVITY_CLEAR_TOP
+
+        startActivity(intent)
+        finish()
+    }
+
+    /**
+     * Apply language change:
+     * - If same language selected, just go back to settings
+     * - Otherwise persist, recreate, and navigate via FullscreenActivity
+     */
+    private fun startLanguageChange() {
+        if (LocaleHelper.getLanguage(this) == lang) {
+            // Same language — just go to SeettingActivity
+            startActivity(Intent(this, SeettingActivity::class.java))
+            overridePendingTransition(0, 0)
             finish()
+            return
         }
+
+        // Persist and apply the new language
+        LocaleHelper.persist(applicationContext, lang)
+        LocaleHelper.onAttach(this)
+        recreate()
+
+        // Navigate to FullscreenActivity with from_setting flag to route back to settings
+        val intent = Intent(this, FullscreenActivity::class.java)
+        intent.putExtra("from_setting", true)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+            Intent.FLAG_ACTIVITY_CLEAR_TASK or
+            Intent.FLAG_ACTIVITY_CLEAR_TOP
+
+        startActivity(intent)
+        finish()
     }
 }

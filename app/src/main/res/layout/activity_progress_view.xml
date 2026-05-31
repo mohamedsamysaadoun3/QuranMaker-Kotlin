@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:background="@drawable/bg_blue_gradient"
     android:layout_width="match_parent"
@@ -24,14 +25,11 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="40dp"
         android:text="2 %"/>
-    <ProgressBar
+    <hazem.nurmontage.videoquran.views.SquareOutlineProgressBar
         android:layout_gravity="center"
         android:id="@+id/progress_horizontal"
-        style="@android:style/Widget.ProgressBar.Horizontal"
         android:layout_width="match_parent"
-        android:layout_height="350dp"
-        android:max="100"
-        android:progress="0"/>
+        android:layout_height="350dp"/>
     <hazem.nurmontage.videoquran.views.text.TextCustumFont
         android:textSize="12sp"
         android:textColor="@color/white"
@@ -81,6 +79,17 @@
             android:paddingStart="18dp"
             android:paddingEnd="18dp"/>
     </LinearLayout>
+    <hazem.nurmontage.videoquran.views.ButtonCustumFont
+        android:textColor="@color/white"
+        android:layout_gravity="bottom|center"
+        android:id="@+id/btn_cancel_hidden"
+        android:background="#00ffffff"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_margin="20dp"
+        android:text="@string/cancel"
+        android:textAllCaps="false"/>
     <ImageButton
         android:layout_gravity="start"
         android:id="@+id/btn_cancel"

@@ -1,71 +1,91 @@
 package hazem.nurmontage.videoquran.ui.splash
 
 import android.annotation.SuppressLint
-import hazem.nurmontage.videoquran.views.TextCustumFontBold
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.View
-import android.view.animation.AlphaAnimation
-import android.view.animation.DecelerateInterpolator
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.EdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowCompat
+import hazem.nurmontage.videoquran.core.base.BaseActivity
+import hazem.nurmontage.videoquran.core.common.Constants
 import hazem.nurmontage.videoquran.databinding.ActivityFullscreenBinding
+import hazem.nurmontage.videoquran.ui.engine.EngineActivity
 import hazem.nurmontage.videoquran.ui.home.WorkUserActivity
+import hazem.nurmontage.videoquran.ui.settings.SeettingActivity
+import hazem.nurmontage.videoquran.utils.LocalPersistence
+import hazem.nurmontage.videoquran.utils.LocaleHelper
 
 /**
- * Splash / Launcher activity.
+ * Splash / Launcher activity — faithful port of original FullscreenActivity.java.
  *
- * Clean version — no purchase checks, no billing, no ads.
- * Simply animates the Quranic verse and transitions to the home screen.
+ * Smart navigation:
+ * 1. If launched with `from_setting` extra → route to SeettingActivity
+ * 2. If no template temp file and no saved templates → route to WorkUserActivity
+ * 3. Otherwise → route to EngineActivity
+ *
+ * Also adds EdgeToEdge.enable() and attachBaseContext(LocaleHelper).
  */
 @SuppressLint("CustomSplashScreen")
-class FullscreenActivity : AppCompatActivity() {
+class FullscreenActivity : BaseActivity() {
 
     private lateinit var binding: ActivityFullscreenBinding
     private var keepSplash = true
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.onAttach(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         splashScreen.setKeepOnScreenCondition { keepSplash }
 
         super.onCreate(savedInstanceState)
+        EdgeToEdge.enable(this)
+
         binding = ActivityFullscreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Hide status / navigation for immersive splash
-        window.decorView.systemUiVisibility = (
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-        )
+        setStatusBarColor(-1)
+        setNavigationBarColor(-1)
 
-        animateSplashAndNavigate()
-    }
+        val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+        insetsController.isAppearanceLightStatusBars = true
+        insetsController.isAppearanceLightNavigationBars = true
 
-    private fun animateSplashAndNavigate() {
-        // Fade-in the Quranic verse
-        val fadeIn = AlphaAnimation(0f, 1f).apply {
-            duration = SPLASH_ANIM_DURATION
-            interpolator = DecelerateInterpolator()
-            fillAfter = true
-        }
+        // Smart navigation after splash delay
+        val allTemplates = getSharedPreferences("MTemplate", 0).all
 
-        binding.nur.visibility = View.VISIBLE
-        binding.nur.startAnimation(fadeIn)
-
-        // Navigate to home after splash delay
         Handler(Looper.getMainLooper()).postDelayed({
+            val targetIntent: Intent
+
+            // 1. If coming from settings language change, go to SeettingActivity
+            if (getIntent() != null && getIntent().getBooleanExtra("from_setting", false)) {
+                targetIntent = Intent(this, SeettingActivity::class.java)
+            } else {
+                // 2. Check templates (matches original logic exactly):
+                //    If TEMPLATE_TMP is null AND saved templates exist → WorkUserActivity (template picker)
+                //    Otherwise → EngineActivity (resume editing or create new)
+                val hasTemplateTmp = LocalPersistence.readObjectFromFile(
+                    this, Constants.TEMPLATE_TMP
+                ) != null
+
+                if (!hasTemplateTmp && allTemplates != null && allTemplates.isNotEmpty()) {
+                    targetIntent = Intent(this, WorkUserActivity::class.java)
+                } else {
+                    targetIntent = Intent(this, EngineActivity::class.java)
+                }
+            }
+
             keepSplash = false
-            startActivity(Intent(this, WorkUserActivity::class.java))
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+            startActivity(targetIntent)
             finish()
-        }, SPLASH_TOTAL_DURATION)
+        }, SPLASH_DELAY)
     }
 
     companion object {
-        private const val SPLASH_ANIM_DURATION = 1200L
-        private const val SPLASH_TOTAL_DURATION = 2000L
+        private const val SPLASH_DELAY = 1200L
     }
 }

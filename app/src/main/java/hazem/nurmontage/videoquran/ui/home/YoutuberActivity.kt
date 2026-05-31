@@ -1,160 +1,183 @@
 package hazem.nurmontage.videoquran.ui.home
 
+import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
+import androidx.activity.EdgeToEdge
+import androidx.activity.OnBackPressedCallback
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import hazem.nurmontage.videoquran.R
+import hazem.nurmontage.videoquran.adapter.YoutuberAdabter
 import hazem.nurmontage.videoquran.core.base.BaseActivity
 import hazem.nurmontage.videoquran.databinding.ActivityYoutuberBinding
-import hazem.nurmontage.videoquran.utils.DrawableHelper
+import hazem.nurmontage.videoquran.model.YoutuberModel
+import hazem.nurmontage.videoquran.utils.AppUtils
+import hazem.nurmontage.videoquran.utils.LocaleHelper
+import hazem.nurmontage.videoquran.utils.ScreenUtils
+import hazem.nurmontage.videoquran.views.TextCustumFont
 
 /**
- * Data class representing a YouTuber/tutorial creator profile.
- */
-data class YoutuberItem(
-    val name: String,
-    val handle: String,
-    val platformId: String,
-    val profileImageUrl: String? = null,
-    val channelUrl: String
-)
-
-/**
- * Activity for displaying a list of YouTuber/tutorial creator profiles.
+ * Youtuber activity — faithful port of original YoutuberActivity.java.
  *
- * Shows social media links and allows users to visit their channels.
- * This is an informational screen — no result is returned.
+ * Displays a list of featured YouTubers with their tutorial videos.
+ *
+ * Features:
+ * - 7 YouTubers with YouTube video IDs and drawable thumbnails
+ * - Click opens YouTube video intent (vnd.youtube: scheme with web fallback)
+ * - "Send link" button opens email to hazemourari08@gmail.com
+ * - Uses external YoutuberAdabter adapter
+ * - EdgeToEdge enabled
  */
 class YoutuberActivity : BaseActivity() {
 
     private lateinit var binding: ActivityYoutuberBinding
-    private lateinit var adapter: YoutuberAdapter
+
+    private val onBackPressedCallback = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            finish()
+        }
+    }
+
+    private val iYoutuber = object : YoutuberAdabter.IYoutuber {
+        override fun onClick(link: String) {
+            // Try YouTube app intent first, fallback to web
+            val youtubeIntent = Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$link"))
+            val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://youtu.be/$link"))
+            try {
+                try {
+                    startActivity(youtubeIntent)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            } catch (_: ActivityNotFoundException) {
+                startActivity(webIntent)
+            }
+        }
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.onAttach(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        EdgeToEdge.enable(this)
         binding = ActivityYoutuberBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
 
-        setStatusBarColor()
+        setStatusBarColor(ViewCompat.MEASURED_STATE_MASK)
+        setNavigationBarColor(ViewCompat.MEASURED_STATE_MASK)
+
+        val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+        insetsController.isAppearanceLightStatusBars = false
+        insetsController.isAppearanceLightNavigationBars = false
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { view, windowInsets ->
+            val insets: Insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+            windowInsets
+        }
+
+        val resources = resources
+        if (resources == null) {
+            finish()
+            return
+        }
 
         // Back button
         binding.btnOnBack.setOnClickListener {
-            finish()
+            onBackPressedCallback.handleOnBackPressed()
         }
 
-        // Send link / add tutorial button
+        // Setup RecyclerView with original YouTuber data
+        init()
+
+        // Send link button — opens email
         binding.btnSendLnk.setOnClickListener {
-            openAddTutorialLink()
+            youtuberLnk(this)
         }
 
-        // Setup RecyclerView
-        adapter = YoutuberAdapter(getYoutubers()) { item ->
-            openChannel(item.channelUrl)
-        }
-
-        binding.rv.apply {
-            layoutManager = LinearLayoutManager(this@YoutuberActivity)
-            adapter = adapter
-        }
+        // Set tutorial label
+        (binding.tvTutorial as? TextCustumFont)?.text = resources.getString(R.string.my_tutorial)
     }
 
-    /**
-     * Open the "add your tutorial" link.
-     */
-    private fun openAddTutorialLink() {
-        try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/201017036022"))
-            startActivity(intent)
-        } catch (_: Exception) {
-            // No browser available
-        }
+    override fun onDestroy() {
+        super.onDestroy()
     }
 
-    /**
-     * Open a YouTube/social media channel URL.
-     */
-    private fun openChannel(url: String) {
-        try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(intent)
-        } catch (_: Exception) {
-            // No browser available
-        }
-    }
+    private fun init() {
+        // Original 7 YouTubers with YouTube video IDs + drawable thumbnails
+        val youtubers = ArrayList<YoutuberModel>()
+        youtubers.add(YoutuberModel("AjFCfILaEI8", R.drawable.hilal_ytb))
+        youtubers.add(YoutuberModel("vMgFSEE2hmg", R.drawable.gasadi_ytb))
+        youtubers.add(YoutuberModel("dr1LTEvCEHk", R.drawable.hicham_ytb))
+        youtubers.add(YoutuberModel("cRNG62W8ZLk", R.drawable.pakestain))
+        youtubers.add(YoutuberModel("tkPEq4qz2OQ", R.drawable.sajad_ytb))
+        youtubers.add(YoutuberModel("5IQzSF0wqJE", R.drawable.noor_ytb))
+        youtubers.add(YoutuberModel("E9cVRHeDzeU", R.drawable.ytb_yesser))
 
-    /**
-     * Returns the list of featured YouTuber/tutorial creators.
-     */
-    private fun getYoutubers(): List<YoutuberItem> {
-        return listOf(
-            YoutuberItem(
-                name = "Helal Tube",
-                handle = "@helaltube",
-                platformId = "y_16:9",
-                channelUrl = "https://www.youtube.com/@helaltube"
-            ),
-            YoutuberItem(
-                name = "Mohammed Qasadi",
-                handle = "@mohammed_qasadi",
-                platformId = "y_16:9",
-                channelUrl = "https://www.youtube.com/@mohammed_qasadi"
-            ),
-            YoutuberItem(
-                name = "Hecham",
-                handle = "@he_x55",
-                platformId = "t",
-                channelUrl = "https://www.tiktok.com/@he_x55"
-            ),
-            YoutuberItem(
-                name = "Earn with Asmat",
-                handle = "@EarnwithAsmat",
-                platformId = "y_16:9",
-                channelUrl = "https://www.youtube.com/@EarnwithAsmat"
-            )
+        val recyclerView = binding.rv
+        val adapter = YoutuberAdabter(
+            iYoutuber,
+            youtubers,
+            AppUtils.getAppVersionName(this),
+            ScreenUtils.getScreenWidth(this),
+            (ScreenUtils.getScreenHeight(this) * 0.35f).toInt()
         )
+
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.itemAnimator = null
+        recyclerView.setHasFixedSize(true)
+        recyclerView.adapter = adapter
     }
 
-    /**
-     * RecyclerView adapter for displaying YouTuber profile cards.
-     */
-    inner class YoutuberAdapter(
-        private val items: List<YoutuberItem>,
-        private val onItemClick: (YoutuberItem) -> Unit
-    ) : RecyclerView.Adapter<YoutuberAdapter.ViewHolder>() {
+    // ── Email link for YouTubers ─────────────────────────────────────
 
-        inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            val tvName: TextView = itemView.findViewById(R.id.tv_feature)
-            val ivPlatform: ImageView = itemView.findViewById(R.id.btn_radio_year)
+    private fun isGmailAvailable(context: Context): Boolean {
+        val intent = Intent(Intent.ACTION_SEND)
+        intent.type = "message/rfc822"
+        intent.setPackage("com.google.android.gm")
+        return !context.packageManager.queryIntentActivities(intent, 0).isEmpty()
+    }
 
-            init {
-                itemView.setOnClickListener {
-                    val pos = adapterPosition
-                    if (pos != RecyclerView.NO_POSITION) {
-                        onItemClick(items[pos])
-                    }
-                }
+    private fun youtuberLnk(context: Context) {
+        val subject = resources.getString(R.string.i_m_youtuber)
+        val emailAddresses = arrayOf("hazemourari08@gmail.com")
+
+        if (isGmailAvailable(context)) {
+            val intent = Intent(Intent.ACTION_SEND)
+            intent.putExtra(Intent.EXTRA_EMAIL, emailAddresses)
+            intent.putExtra(Intent.EXTRA_BCC, emailAddresses)
+            intent.putExtra(Intent.EXTRA_SUBJECT, subject)
+            intent.putExtra(Intent.EXTRA_TEXT, resources.getString(R.string.link))
+            intent.type = "message/rfc822"
+            intent.setPackage("com.google.android.gm")
+            try {
+                startActivity(intent)
+                return
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.row_feature, parent, false)
-            return ViewHolder(view)
+        try {
+            val intent = Intent(Intent.ACTION_SEND)
+            intent.putExtra(Intent.EXTRA_EMAIL, emailAddresses)
+            intent.putExtra(Intent.EXTRA_BCC, emailAddresses)
+            intent.putExtra(Intent.EXTRA_SUBJECT, subject)
+            intent.putExtra(Intent.EXTRA_TEXT, resources.getString(R.string.link))
+            intent.type = "message/rfc822"
+            startActivity(Intent.createChooser(intent, "Send email using"))
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val item = items[position]
-            holder.tvName.text = "${item.name}  ${item.handle}"
-            holder.ivPlatform.setImageResource(DrawableHelper.getIdResource(item.platformId))
-        }
-
-        override fun getItemCount(): Int = items.size
     }
 }

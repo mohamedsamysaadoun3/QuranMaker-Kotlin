@@ -2,11 +2,14 @@ package hazem.nurmontage.videoquran.ui.render
 
 import android.app.Dialog
 import android.content.Intent
+import android.graphics.drawable.ColorDrawable
+import android.net.Uri
 import android.os.Bundle
 import android.os.PowerManager
+import android.view.LayoutInflater
 import android.view.View
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -19,12 +22,14 @@ import com.arthenica.ffmpegkit.ReturnCode
 import com.arthenica.ffmpegkit.Statistics
 import com.arthenica.ffmpegkit.StatisticsCallback
 import hazem.nurmontage.videoquran.R
-import hazem.nurmontage.videoquran.databinding.ActivityProgressViewBinding
 import hazem.nurmontage.videoquran.core.base.BaseActivity
+import hazem.nurmontage.videoquran.core.common.Common
+import hazem.nurmontage.videoquran.databinding.ActivityProgressViewBinding
 import hazem.nurmontage.videoquran.model.EntityMedia
-import hazem.nurmontage.videoquran.model.RenderManager
 import hazem.nurmontage.videoquran.model.SquareBitmapModel
 import hazem.nurmontage.videoquran.model.Template
+import hazem.nurmontage.videoquran.ui.editor.VideoViewActivity
+import hazem.nurmontage.videoquran.utils.FileMediaScanner
 import hazem.nurmontage.videoquran.utils.LocalPersistence
 import hazem.nurmontage.videoquran.utils.LocaleHelper
 import hazem.nurmontage.videoquran.utils.audio.AudioUtils
@@ -36,16 +41,18 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Semaphore
+import kotlin.math.abs
 import kotlin.math.max
 
 /**
  * Activity that displays export progress and orchestrates the FFmpeg rendering pipeline.
  *
- * This is a **thin UI shell** that:
+ * This is the **complete** export activity that:
  * - Displays a progress indicator during video export
  * - Delegates FFmpeg command composition to [ExportCommandBuilder]
  * - Executes pre-render steps (masked segments, video layers, timer overlay)
  * - Manages FFmpeg session lifecycle and cancellation
+ * - Handles gallery insertion, sharing, and error reporting
  *
  * **Threading model (Kotlin rewrite)**:
  * - All background work uses `lifecycleScope.launch(Dispatchers.IO)`
@@ -54,10 +61,10 @@ import kotlin.math.max
  *   [ExportCommandBuilder.buildCommand] coordinates them with the legacy pattern;
  *   the Activity's own flow is fully coroutine-based.
  *
- * Originally: ProgressViewActivity.java (~1212 lines)
- * Converted to: ProgressViewActivity.kt — structural skeleton (~600 lines)
+ * Originally: ProgressViewActivity.java (~3190 lines)
+ * Converted to: ProgressViewActivity.kt — complete export functionality
  */
-class ProgressViewActivity : BaseActivity() {
+class ProgressViewActivity : BaseActivity(), ExportCommandBuilder.PreRenderExecutor {
 
     // ════════════════════════════════════════════════════════════════════
     //  ViewBinding — ACTIVE
@@ -81,12 +88,6 @@ class ProgressViewActivity : BaseActivity() {
 
     private var statistics: Statistics? = null
 
-    /** Overlay string builder for filter_complex composition. */
-    private val overlay = StringBuilder()
-
-    /** Weighted multi-step render progress tracker. */
-    private val renderManager = RenderManager()
-
     /** Active FFmpeg session IDs for cancellation. */
     private val id_ffmpeg = mutableListOf<Long>()
 
@@ -97,6 +98,12 @@ class ProgressViewActivity : BaseActivity() {
 
     /** Wake lock reference for screen-on during export. */
     private var wakeLock: PowerManager.WakeLock? = null
+
+    /** Weighted multi-step render progress tracker. */
+    private val renderManager = ExportCommandBuilder.getRenderManager()
+
+    /** Worker thread for running the export after setupCommand. */
+    private var workerThread: Thread? = null
 
     /** Back-press handler — triggers cancel dialog instead of immediate exit. */
     private val onBackPressedCallback = object : OnBackPressedCallback(true) {
@@ -152,32 +159,36 @@ class ProgressViewActivity : BaseActivity() {
 
     override fun onPause() {
         super.onPause()
-        // Preserve partial wake lock if export is running
+        dismissCancelDialog()
     }
 
     override fun onDestroy() {
         isDestroy = true
         clearFFmpeg()
-        cancelDialog?.dismiss()
-        cancelDialog = null
+        dismissCancelDialog()
         releaseWakeLock()
         super.onDestroy()
+
+        // Clean up template folder
+        try {
+            val template = mTemplate
+            if (template != null) {
+                Thread {
+                    deleteFolder(File(template.folder_template ?: ""))
+                }.start()
+            }
+            workerThread?.interrupt()
+        } catch (_: Exception) {
+        }
     }
 
     // ════════════════════════════════════════════════════════════════════
     //  Wake lock
     // ════════════════════════════════════════════════════════════════════
 
-    /**
-     * Acquire a partial wake lock so the CPU stays active during export.
-     *
-     * Falls back to window-flag based screen-on if [PowerManager] is
-     * unavailable.
-     */
     override fun wakeLockAcquire() {
         try {
             val pm = getSystemService(POWER_SERVICE) as? PowerManager ?: run {
-                // Fallback to BaseActivity's window-flag approach
                 super.wakeLockAcquire()
                 return
             }
@@ -188,7 +199,6 @@ class ProgressViewActivity : BaseActivity() {
                 acquire(10 * 60 * 1000L) // 10 min max
             }
         } catch (_: Exception) {
-            // Window flag keeps screen on as fallback
             super.wakeLockAcquire()
         }
     }
@@ -199,7 +209,6 @@ class ProgressViewActivity : BaseActivity() {
                 if (it.isHeld) it.release()
             }
         } catch (_: Exception) {
-            // Ignore
         }
         wakeLock = null
     }
@@ -215,13 +224,14 @@ class ProgressViewActivity : BaseActivity() {
      * detects available FFmpeg codecs, then calls [setupCommand].
      */
     private fun startExport() {
-        val templateKey = intent.getStringExtra("template_key")
+        val templateKey = intent.getStringExtra(Common.TEMPLATE)
             ?: intent.getStringExtra("idTemplate")
+            ?: intent.getStringExtra("template_key")
+
         if (templateKey != null) {
             mTemplate = LocalPersistence.readObjectFromFile(this, templateKey) as? Template
         }
         if (mTemplate == null) {
-            // Try reading from intent serializable extra
             @Suppress("DEPRECATION")
             mTemplate = intent.getSerializableExtra("template") as? Template
         }
@@ -253,9 +263,6 @@ class ProgressViewActivity : BaseActivity() {
      *
      * Replaces the original `Executor + Handler` pattern with a coroutine-based
      * approach. Runs on [Dispatchers.IO]; calls [callback] when all media is ready.
-     *
-     * @param list     Media entities to prepare, or null for no-op
-     * @param callback Optional callback after all media is prepared
      */
     private suspend fun prepareAllMedia(list: List<EntityMedia>?, callback: Runnable?) {
         if (list.isNullOrEmpty()) {
@@ -263,84 +270,253 @@ class ProgressViewActivity : BaseActivity() {
             return
         }
 
-        val latch = CountDownLatch(list.size)
         for (media in list) {
-            val paths = media.paths_https
-            if (!paths.isNullOrEmpty()) {
-                lifecycleScope.launch(Dispatchers.IO) {
-                    for (url in paths) {
-                        try {
-                            val localPath = downloadToCache(url, media)
-                            if (localPath != null) {
-                                media.path_ffmpeg = localPath
-                            }
-                        } catch (_: Exception) {
-                            // Continue with remaining URLs
-                        }
+            try {
+                if (media.end >= media.start && media.path_ffmpeg_effect == null && media.uri != null) {
+                    val localPath = if (media.uri!!.startsWith("http")) {
+                        AudioUtils.downloadFile(this, media.uri, mTemplate?.folder_template)
+                    } else {
+                        AudioUtils.copyFromUri(this, Uri.parse(media.uri), mTemplate?.folder_template)
                     }
-                    latch.countDown()
+                    if (localPath != null) {
+                        media.path_ffmpeg = localPath
+                        media.path_ffmpeg_effect = localPath
+                    }
                 }
-            } else {
-                // Already local — nothing to prepare
-                latch.countDown()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
 
-        // Wait for all downloads/copies to complete
-        latch.await()
         callback?.run()
     }
 
     /**
-     * Download a remote file to the template cache directory.
-     * @return The local path, or null on failure.
-     */
-    private fun downloadToCache(url: String, media: EntityMedia): String? {
-        val template = mTemplate ?: return null
-        val destDir = template.folder_template ?: cacheDir.absolutePath
-        return AudioUtils.copyFromUri(this, android.net.Uri.parse(url), destDir)
-    }
-
-    /**
-     * **DELEGATES** command composition to [ExportCommandBuilder].
+     * Set up the complete FFmpeg export command.
      *
-     * After the builder produces the final FFmpeg command array,
-     * it is handed to [export] for execution.
+     * Delegates to [ExportCommandBuilder.buildCommand] which builds
+     * the complete filter_complex with all entity overlays.
+     * Then waits for all pre-render steps to complete before executing.
      */
     private fun setupCommand(codecInfo: FfmpegCodecChecker.CodecInfo) {
         val template = mTemplate ?: return
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            val command = ExportCommandBuilder.buildCommand(
-                template = template,
-                codecInfo = codecInfo,
-                preRenderMask_Rounded = { model, duration, latch, sem ->
-                    preRenderMask_Rounded(model, duration, latch, sem)
-                },
-                preRenderMask_Circle = { model, duration, latch, sem ->
-                    preRenderMask_Circle(model, duration, latch, sem)
-                },
-                preRender_NoMask = { model, duration, latch, sem, codec ->
-                    preRender_NoMask(model, duration, latch, sem, codec)
-                },
-                preRenderVideo = { duration, latch, sem, codec ->
-                    preRenderVideo(duration, latch, sem, codec)
-                },
-                preRenderVideoHue = { duration, latch, sem, codec ->
-                    preRenderVideoHue(duration, latch, sem, codec)
-                },
-                generateVideoTimer = { duration, latch, sem ->
-                    generateVideoTimer(duration, latch, sem)
+        val command = ExportCommandBuilder.buildCommand(template, codecInfo, this)
+
+        if (command != null) {
+            // Execute the command on a worker thread
+            workerThread = Thread {
+                try {
+                    export(command)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        toStudio()
+                    }
                 }
+            }.also { it.start() }
+        } else {
+            toStudio()
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  Pre-render executor — implements ExportCommandBuilder.PreRenderExecutor
+    // ════════════════════════════════════════════════════════════════════
+
+    override fun executePreRenderMaskRounded(
+        model: SquareBitmapModel, durationMs: Int,
+        latch: CountDownLatch, semaphore: Semaphore
+    ): String? {
+        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
+
+        try {
+            val (args, outputPath, _) = ExportCommandBuilder.preRenderMaskRoundedArgs(
+                template, model, durationMs, filesDir
             )
 
-            withContext(Dispatchers.Main) {
-                if (command != null) {
-                    export(command)
-                } else {
-                    toStudio()
-                }
+            val syncLatch = CountDownLatch(1)
+            semaphore.acquire()
+            val session = FFmpegKit.executeWithArgumentsAsync(args) { _ ->
+                syncLatch.countDown()
             }
+            id_ffmpeg.add(session.sessionId)
+
+            syncLatch.await()
+            return if (File(outputPath).exists()) outputPath else null
+        } catch (e: Exception) {
+            return null
+        } finally {
+            updateNext(latch, semaphore)
+        }
+    }
+
+    override fun executePreRenderMaskCircle(
+        model: SquareBitmapModel, durationMs: Int,
+        latch: CountDownLatch, semaphore: Semaphore
+    ): String? {
+        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
+
+        try {
+            val (args, outputPath) = ExportCommandBuilder.preRenderMaskCircleArgs(
+                template, model, durationMs, filesDir
+            )
+
+            val syncLatch = CountDownLatch(1)
+            semaphore.acquire()
+            val session = FFmpegKit.executeWithArgumentsAsync(args) { _ ->
+                syncLatch.countDown()
+            }
+            id_ffmpeg.add(session.sessionId)
+
+            syncLatch.await()
+            return if (File(outputPath).exists()) outputPath else null
+        } catch (e: Exception) {
+            return null
+        } finally {
+            updateNext(latch, semaphore)
+        }
+    }
+
+    override fun executePreRenderNoMask(
+        model: SquareBitmapModel, durationMs: Int,
+        latch: CountDownLatch, semaphore: Semaphore, codec: String?
+    ): String? {
+        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
+
+        try {
+            val (args, outputPath) = ExportCommandBuilder.preRenderNoMaskArgs(
+                template, model, durationMs, codec
+            )
+
+            val syncLatch = CountDownLatch(1)
+            semaphore.acquire()
+            val session = FFmpegKit.executeWithArgumentsAsync(args) { _ ->
+                syncLatch.countDown()
+            }
+            id_ffmpeg.add(session.sessionId)
+
+            syncLatch.await()
+            return if (File(outputPath).exists()) outputPath else null
+        } catch (e: Exception) {
+            return null
+        } finally {
+            updateNext(latch, semaphore)
+        }
+    }
+
+    override fun executePreRenderVideo(
+        durationMs: Int, latch: CountDownLatch,
+        semaphore: Semaphore, codec: String?
+    ): String? {
+        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
+
+        try {
+            val (args, outputPath) = ExportCommandBuilder.preRenderVideoArgs(template, durationMs, codec)
+            if (args == null) return null.also { updateNext(latch, semaphore) }
+
+            val syncLatch = CountDownLatch(1)
+            semaphore.acquire()
+            val session = FFmpegKit.executeWithArgumentsAsync(args) { _ ->
+                syncLatch.countDown()
+            }
+            id_ffmpeg.add(session.sessionId)
+
+            syncLatch.await()
+            return if (File(outputPath).exists()) outputPath else null
+        } catch (e: Exception) {
+            return null
+        } finally {
+            updateNext(latch, semaphore)
+        }
+    }
+
+    override fun executePreRenderVideoHue(
+        durationMs: Int, latch: CountDownLatch,
+        semaphore: Semaphore, codec: String?
+    ): String? {
+        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
+
+        try {
+            val (args, outputPath) = ExportCommandBuilder.preRenderVideoHueArgs(template, durationMs, codec)
+            if (args == null) return null.also { updateNext(latch, semaphore) }
+
+            val syncLatch = CountDownLatch(1)
+            semaphore.acquire()
+            val session = FFmpegKit.executeWithArgumentsAsync(args) { _ ->
+                syncLatch.countDown()
+            }
+            id_ffmpeg.add(session.sessionId)
+
+            syncLatch.await()
+            return if (File(outputPath).exists()) outputPath else null
+        } catch (e: Exception) {
+            return null
+        } finally {
+            updateNext(latch, semaphore)
+        }
+    }
+
+    override fun executeGenerateTimer(
+        durationMs: Int, latch: CountDownLatch,
+        semaphore: Semaphore
+    ): String? {
+        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
+
+        try {
+            val (args, outputPath) = ExportCommandBuilder.generateVideoTimerArgs(template, durationMs)
+
+            val syncLatch = CountDownLatch(1)
+            semaphore.acquire()
+            val session = FFmpegKit.executeWithArgumentsAsync(args) { _ ->
+                syncLatch.countDown()
+            }
+            id_ffmpeg.add(session.sessionId)
+
+            syncLatch.await()
+            return if (File(outputPath).exists()) outputPath else null
+        } catch (e: InterruptedException) {
+            renderManager.nextTask()
+            latch.countDown()
+            return null
+        } catch (e: Exception) {
+            return null
+        } finally {
+            renderManager.nextTask()
+            semaphore.release()
+        }
+    }
+
+    override fun executeGenerateVideoSegment(
+        entityFile: String, outputName: String, filter: String,
+        durationSec: Int, index: Int,
+        latch: CountDownLatch, semaphore: Semaphore
+    ): String? {
+        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
+
+        try {
+            renderManager.addTask("anim prerender", durationSec)
+            val (args, outputPath) = ExportCommandBuilder.generateVideoSegmentArgs(
+                template, entityFile, outputName, filter, durationSec, index
+            )
+
+            val syncLatch = CountDownLatch(1)
+            semaphore.acquire()
+            val session = FFmpegKit.executeWithArgumentsAsync(args) { _ ->
+                syncLatch.countDown()
+            }
+            id_ffmpeg.add(session.sessionId)
+
+            syncLatch.await()
+            return if (File(outputPath).exists()) outputPath else null
+        } catch (e: InterruptedException) {
+            renderManager.nextTask()
+            latch.countDown()
+            return null
+        } catch (e: Exception) {
+            return null
+        } finally {
+            updateNext(latch, semaphore)
         }
     }
 
@@ -350,34 +526,27 @@ class ProgressViewActivity : BaseActivity() {
 
     /**
      * Execute the final FFmpeg command with progress tracking.
-     *
-     * Registers a [StatisticsCallback] for progress updates and a
-     * [FFmpegSessionCompleteCallback] for completion handling.
      */
     private fun export(command: Array<String>) {
         if (isCancel || isDestroy) return
-
-        val template = mTemplate ?: return
-        @Suppress("unused")
-        val durationSec = max(template.duration / 1000, 1)
 
         val session: FFmpegSession = FFmpegKit.executeWithArgumentsAsync(
             command,
             FFmpegSessionCompleteCallback { session ->
                 if (session == null || isDestroy) return@FFmpegSessionCompleteCallback
 
+                dismissCancelDialog()
+                renderManager.nextTask()
+
                 val returnCode = session.returnCode
                 if (ReturnCode.isSuccess(returnCode)) {
-                    // Export complete — navigate to result
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        updateProgressSmooth(100f)
-                        onExportComplete()
-                    }
+                    // Export complete — animate to 100% then navigate
+                    completeProgress()
                 } else {
                     // Export failed or cancelled
                     if (!isCancel && !ReturnCode.isCancel(returnCode)) {
                         lifecycleScope.launch(Dispatchers.Main) {
-                            toStudio()
+                            showError(session)
                         }
                     }
                 }
@@ -386,7 +555,9 @@ class ProgressViewActivity : BaseActivity() {
             StatisticsCallback { stats ->
                 if (stats != null) {
                     statistics = stats
-                    updateProgressDialog(stats)
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        updateProgressDialog(stats)
+                    }
                 }
             }
         )
@@ -396,349 +567,89 @@ class ProgressViewActivity : BaseActivity() {
 
     /**
      * Update the progress indicator from FFmpeg [Statistics].
-     *
-     * Calculates progress as `time_ms / total_duration_ms` and
-     * feeds it through the [RenderManager] for weighted multi-step tracking.
      */
     private fun updateProgressDialog(stats: Statistics) {
-        val template = mTemplate ?: return
-        val totalDurationMs = max(template.duration, 500)
-        val currentTimeMs = stats.time
+        if (isDestroy) return
 
-        val localProgress = (currentTimeMs.toFloat() / totalDurationMs.toFloat()).coerceIn(0f, 1f)
-        val globalProgress = renderManager.updateLocalProgress(localProgress)
-        val percent = globalProgress * 100f
+        try {
+            val time = stats.time
+            if (time <= 0) return
 
-        updateProgressSmooth(percent)
+            val template = mTemplate ?: return
+            val totalDurationMs = max(template.duration, 500)
+            val currentStepDuration = renderManager.getCurrentStepDuration()
+            if (currentStepDuration <= 0f) return
+
+            var localProgress = (time / 1000.0f) / currentStepDuration
+            if (localProgress > 1.0f) localProgress = 1.0f
+
+            targetProgress = renderManager.updateLocalProgress(localProgress) * 100.0f
+
+            if (!isAnimating) {
+                startSmoothAnimation()
+            }
+        } catch (_: Exception) {
+        }
     }
 
     /**
-     * Smoothly animate the progress indicator toward [targetPercent].
-     *
-     * Uses a simple lerp approach — increments the displayed value
-     * toward the target each frame instead of jumping.
+     * Smoothly animate the progress indicator toward [targetProgress].
      */
-    private fun updateProgressSmooth(targetPercent: Float) {
-        targetProgress = targetPercent
-        if (isAnimating) return
+    private fun startSmoothAnimation() {
         isAnimating = true
 
-        // Simple step-based animation on main thread
         lifecycleScope.launch(Dispatchers.Main) {
-            while (displayedProgress < targetProgress - 0.5f) {
-                displayedProgress += (targetProgress - displayedProgress) * 0.15f + 0.1f
-                displayedProgress = displayedProgress.coerceIn(0f, 100f)
-                setProgressVisual(displayedProgress)
-                delay(16) // ~60fps
+            while (!isDestroy) {
+                displayedProgress += (targetProgress - displayedProgress) * 0.1f
+                val progress = displayedProgress.coerceIn(0f, 100f)
+                binding.progressHorizontal.progress = progress.toInt().coerceIn(0, binding.progressHorizontal.max)
+                binding.tvProgress.visibility = View.VISIBLE
+                binding.tvProgress.text = "${progress.toInt()} %"
+
+                if (abs(displayedProgress - targetProgress) > 0.1f) {
+                    delay(16)
+                } else {
+                    isAnimating = false
+                    break
+                }
             }
-            displayedProgress = targetProgress
-            setProgressVisual(displayedProgress)
-            isAnimating = false
         }
     }
 
     /**
-     * Set the visual progress on the progress indicator.
-     * Uses the standard ProgressBar from the layout binding.
+     * Animate progress to 100% on successful export completion,
+     * then insert the video into the gallery and navigate to share.
      */
-    private fun setProgressVisual(percent: Float) {
-        binding.progressHorizontal.progress = percent.toInt()
-        binding.tvProgress.visibility = View.VISIBLE
-        binding.tvProgress.text = "${percent.toInt()} %"
-    }
+    private fun completeProgress() {
+        isDestroy = true
 
-    // ════════════════════════════════════════════════════════════════════
-    //  Pre-render methods — execute individual FFmpeg pipeline steps
-    //  Each method builds the FFmpeg args, executes asynchronously,
-    //  waits on a CountDownLatch, then signals via the outer latch/semaphore.
-    // ════════════════════════════════════════════════════════════════════
-
-    /**
-     * Pre-render a rounded-rectangle masked video segment.
-     *
-     * Uses [ExportCommandBuilder.preRenderMaskRounded] to build the command,
-     * then executes it via [FFmpegKit]. The [latch] is counted down and
-     * [semaphore] is released when done so [ExportCommandBuilder] can proceed.
-     *
-     * @return Output file path, or null on failure
-     */
-    private fun preRenderMask_Rounded(
-        model: SquareBitmapModel,
-        durationMs: Int,
-        latch: CountDownLatch,
-        semaphore: Semaphore
-    ): String? {
-        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
-
-        try {
-            val (args, outputPath, _) = ExportCommandBuilder.preRenderMaskRounded(
-                template, model, durationMs, filesDir
+        lifecycleScope.launch(Dispatchers.Main) {
+            displayedProgress += (100.0f - displayedProgress) * 0.45f
+            binding.progressHorizontal.progress = minOf(
+                maxOf(displayedProgress.toInt(), 0),
+                binding.progressHorizontal.max
             )
 
-            val syncLatch = CountDownLatch(1)
-            val session = FFmpegKit.executeWithArgumentsAsync(args) { completedSession ->
-                completedSession?.sessionId?.let { id_ffmpeg.remove(it) }
-                syncLatch.countDown()
-            }
-            id_ffmpeg.add(session.sessionId)
+            val isComplete = binding.progressHorizontal.progress >= 100
+            val isNearComplete = abs(displayedProgress - 100.0f) < 0.1f
 
-            syncLatch.await()
-            return if (File(outputPath).exists()) outputPath else null
-        } catch (e: Exception) {
-            return null
-        } finally {
-            updateNext(latch, semaphore)
-        }
-    }
+            if (isComplete || isNearComplete) {
+                binding.progressHorizontal.progress = 100
+                displayedProgress = 100f
+                targetProgress = 100f
 
-    /**
-     * Pre-render a circle-masked video segment.
-     *
-     * @return Output file path, or null on failure
-     */
-    private fun preRenderMask_Circle(
-        model: SquareBitmapModel,
-        durationMs: Int,
-        latch: CountDownLatch,
-        semaphore: Semaphore
-    ): String? {
-        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
+                // Insert to gallery
+                val uri = mUri
+                if (uri != null) {
+                    insertToGallery(Uri.parse(uri))
+                }
 
-        try {
-            val outputPath = "${template.folder_template}/circle_${System.currentTimeMillis()}.mov"
-            val maxSize = max(template.width, template.height)
-            var w = Math.round(model.width_sqaure)
-            var h = Math.round(model.height_square)
-            if ((w and 1) == 1) w++
-            if ((h and 1) == 1) h++
-
-            val maskFile = ExportCommandBuilder.getOrCreateMaskCircle(
-                w, h, template.folder_template ?: filesDir.absolutePath
-            )
-
-            val filterComplex = "[0:v]scale=$maxSize:$maxSize:force_original_aspect_ratio=increase," +
-                    "crop=${Math.round(model.right)}:${Math.round(model.bottom)}:" +
-                    "${Math.round(model.lef_square)}:${Math.round(model.top_square)}," +
-                    "scale=$w:$h:flags=lanczos[v];[v][1:v]alphamerge,format=rgba"
-
-            val args = arrayOf(
-                "-hide_banner", "-y",
-                "-stream_loop", "-1",
-                "-i", template.uri_media_video ?: "",
-                "-i", maskFile.absolutePath,
-                "-filter_complex", filterComplex,
-                "-c:v", "qtrle", "-pix_fmt", "rgba",
-                "-r", "25",
-                "-t", "${max(durationMs, 500)}ms",
-                outputPath
-            )
-
-            val syncLatch = CountDownLatch(1)
-            val session = FFmpegKit.executeWithArgumentsAsync(args) { completedSession ->
-                completedSession?.sessionId?.let { id_ffmpeg.remove(it) }
-                syncLatch.countDown()
-            }
-            id_ffmpeg.add(session.sessionId)
-
-            syncLatch.await()
-            return if (File(outputPath).exists()) outputPath else null
-        } catch (e: Exception) {
-            return null
-        } finally {
-            updateNext(latch, semaphore)
-        }
-    }
-
-    /**
-     * Pre-render a video segment without mask (direct overlay).
-     *
-     * @return Output file path, or null on failure
-     */
-    private fun preRender_NoMask(
-        model: SquareBitmapModel,
-        durationMs: Int,
-        latch: CountDownLatch,
-        semaphore: Semaphore,
-        codec: String?
-    ): String? {
-        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
-
-        try {
-            val outputPath = "${template.folder_template}/nomask_${System.currentTimeMillis()}.mov"
-            val maxSize = max(template.width, template.height)
-            var w = Math.round(model.width_sqaure)
-            var h = Math.round(model.height_square)
-            if ((w and 1) == 1) w++
-            if ((h and 1) == 1) h++
-
-            val filterComplex = "[0:v]scale=$maxSize:$maxSize:force_original_aspect_ratio=increase," +
-                    "crop=${Math.round(model.right)}:${Math.round(model.bottom)}:" +
-                    "${Math.round(model.lef_square)}:${Math.round(model.top_square)}," +
-                    "scale=$w:$h:flags=lanczos,format=rgba"
-
-            val args = mutableListOf(
-                "-hide_banner", "-y",
-                "-stream_loop", "-1",
-                "-i", template.uri_media_video ?: "",
-                "-filter_complex", filterComplex
-            )
-
-            if (codec != null) {
-                args.addAll(listOf("-threads", "0", "-c:v", codec, "-preset", "fast", "-crf", "18"))
+                // Navigate to share/video view
+                toShare()
             } else {
-                args.addAll(listOf("-c:v", "qtrle", "-pix_fmt", "rgba"))
+                delay(16)
+                completeProgress()
             }
-
-            args.addAll(listOf("-r", "25", "-t", "${max(durationMs, 500)}ms", outputPath))
-
-            val syncLatch = CountDownLatch(1)
-            val session = FFmpegKit.executeWithArgumentsAsync(args.toTypedArray()) { completedSession ->
-                completedSession?.sessionId?.let { id_ffmpeg.remove(it) }
-                syncLatch.countDown()
-            }
-            id_ffmpeg.add(session.sessionId)
-
-            syncLatch.await()
-            return if (File(outputPath).exists()) outputPath else null
-        } catch (e: Exception) {
-            return null
-        } finally {
-            updateNext(latch, semaphore)
-        }
-    }
-
-    /**
-     * Pre-render the main video layer with background overlay.
-     *
-     * Delegates to [ExportCommandBuilder.preRenderVideo] for command composition.
-     *
-     * @return Output file path, or null on failure
-     */
-    private fun preRenderVideo(
-        durationMs: Int,
-        latch: CountDownLatch,
-        semaphore: Semaphore,
-        codec: String?
-    ): String? {
-        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
-
-        try {
-            val (args, outputPath) = ExportCommandBuilder.preRenderVideo(template, durationMs, codec)
-            if (args == null) return null.also { updateNext(latch, semaphore) }
-
-            val syncLatch = CountDownLatch(1)
-            val session = FFmpegKit.executeWithArgumentsAsync(args) { completedSession ->
-                completedSession?.sessionId?.let { id_ffmpeg.remove(it) }
-                syncLatch.countDown()
-            }
-            id_ffmpeg.add(session.sessionId)
-
-            syncLatch.await()
-            return if (File(outputPath).exists()) outputPath else null
-        } catch (e: Exception) {
-            return null
-        } finally {
-            updateNext(latch, semaphore)
-        }
-    }
-
-    /**
-     * Pre-render a video segment with hue/saturation adjustment.
-     *
-     * Applies `hue=s=X:b=Y` filter to shift the color tone.
-     *
-     * @return Output file path, or null on failure
-     */
-    private fun preRenderVideoHue(
-        durationMs: Int,
-        latch: CountDownLatch,
-        semaphore: Semaphore,
-        codec: String?
-    ): String? {
-        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
-
-        try {
-            val outputPath = "${template.folder_template}/hue_${System.currentTimeMillis()}.mp4"
-            val maxSize = max(template.width, template.height)
-            val filterComplex = "[0:v]scale=$maxSize:$maxSize:force_original_aspect_ratio=increase:flags=lanczos," +
-                    "crop=${template.width}:${template.height}:" +
-                    "(iw-${template.width})/2:(ih-${template.height})/2," +
-                    "hue=s=1.2:b=0.05[v];" +
-                    "[v][1:v]overlay,format=rgba"
-
-            val bgPath = template.uri_bg_ffmpeg
-            if (bgPath == null || !File(bgPath).let { it.exists() && it.isFile }) {
-                return null.also { updateNext(latch, semaphore) }
-            }
-
-            val args = mutableListOf(
-                "-hide_banner", "-y",
-                "-stream_loop", "-1",
-                "-i", template.uri_media_video ?: "",
-                "-i", bgPath,
-                "-filter_complex", filterComplex
-            )
-
-            if (codec != null) {
-                args.addAll(listOf("-threads", "0", "-c:v", codec, "-preset", "fast", "-crf", "18"))
-            } else {
-                args.addAll(listOf("-b:v", "4M"))
-            }
-
-            args.addAll(listOf(
-                "-r", template.fps.toString(),
-                "-t", "${max(durationMs, 500)}ms",
-                "-movflags", "+faststart",
-                "-an",
-                outputPath
-            ))
-
-            val syncLatch = CountDownLatch(1)
-            val session = FFmpegKit.executeWithArgumentsAsync(args.toTypedArray()) { completedSession ->
-                completedSession?.sessionId?.let { id_ffmpeg.remove(it) }
-                syncLatch.countDown()
-            }
-            id_ffmpeg.add(session.sessionId)
-
-            syncLatch.await()
-            return if (File(outputPath).exists()) outputPath else null
-        } catch (e: Exception) {
-            return null
-        } finally {
-            updateNext(latch, semaphore)
-        }
-    }
-
-    /**
-     * Generate a timer overlay video using `drawtext` filter.
-     *
-     * Delegates to [ExportCommandBuilder.generateVideoTimerArgs] for command composition.
-     *
-     * @return Output file path, or null on failure
-     */
-    private fun generateVideoTimer(
-        durationMs: Int,
-        latch: CountDownLatch,
-        semaphore: Semaphore
-    ): String? {
-        val template = mTemplate ?: return null.also { updateNext(latch, semaphore) }
-
-        try {
-            val (args, outputPath) = ExportCommandBuilder.generateVideoTimerArgs(template, durationMs)
-
-            val syncLatch = CountDownLatch(1)
-            val session = FFmpegKit.executeWithArgumentsAsync(args) { completedSession ->
-                completedSession?.sessionId?.let { id_ffmpeg.remove(it) }
-                syncLatch.countDown()
-            }
-            id_ffmpeg.add(session.sessionId)
-
-            syncLatch.await()
-            return if (File(outputPath).exists()) outputPath else null
-        } catch (e: Exception) {
-            return null
-        } finally {
-            updateNext(latch, semaphore)
         }
     }
 
@@ -746,22 +657,17 @@ class ProgressViewActivity : BaseActivity() {
     //  FFmpeg session management
     // ════════════════════════════════════════════════════════════════════
 
-    /**
-     * Cancel all active FFmpeg sessions and clear the session ID list.
-     */
     private fun clearFFmpeg() {
         for (id in id_ffmpeg) {
             try {
                 FFmpegKit.cancel(id)
             } catch (_: Exception) {
-                // Session may have already completed
             }
         }
         id_ffmpeg.clear()
         try {
             FFmpegKit.cancel()
         } catch (_: Exception) {
-            // Ignore
         }
     }
 
@@ -771,10 +677,7 @@ class ProgressViewActivity : BaseActivity() {
 
     /**
      * Show a confirmation dialog before cancelling the export.
-     *
-     * Localized for Arabic and English:
-     * - Arabic: "هل أنت متأكد من مغادرة هذا العمل؟" / "مغادرة" / "متابعة"
-     * - English: "Are you sure want to leave this work ?" / "Leave" / "Continue"
+     * Uses the original layout_dialog with custom font buttons.
      */
     private fun showCancelDialog() {
         if (cancelDialog?.isShowing == true) return
@@ -789,20 +692,125 @@ class ProgressViewActivity : BaseActivity() {
         val positiveBtn = if (isArabic) "مغادرة" else "Leave"
         val negativeBtn = if (isArabic) "متابعة" else "Continue"
 
-        cancelDialog = android.app.AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton(positiveBtn) { _, _ ->
-                isCancel = true
-                clearFFmpeg()
-                toStudio()
+        val dialog = Dialog(this)
+        cancelDialog = dialog
+        dialog.setCancelable(true)
+        dialog.requestWindowFeature(1)
+        dialog.window?.setLayout(-1, -2)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(0))
+
+        val inflate = LayoutInflater.from(this).inflate(R.layout.layout_dialog, null as ViewGroup?)
+        dialog.setContentView(inflate)
+
+        // Try to find custom font views; fall back to AlertDialog if not found
+        try {
+            val tvTitle = inflate.findViewById<View>(R.id.dialog_title)
+            val tvMessage = inflate.findViewById<View>(R.id.dialog_message)
+            val btnNo = inflate.findViewById<View>(R.id.dialog_no)
+            val btnYes = inflate.findViewById<View>(R.id.dialog_yes)
+
+            if (tvTitle is android.widget.TextView) tvTitle.text = title
+            if (tvMessage is android.widget.TextView) tvMessage.text = message
+            if (btnNo is android.widget.Button) {
+                btnNo.text = positiveBtn
+                btnNo.setOnClickListener {
+                    isCancel = true
+                    clearFFmpeg()
+                    toStudio()
+                }
             }
-            .setNegativeButton(negativeBtn) { d, _ ->
-                d.dismiss()
+            if (btnYes is android.widget.Button) {
+                btnYes.text = negativeBtn
+                btnYes.setOnClickListener {
+                    dismissCancelDialog()
+                }
             }
-            .setCancelable(false)
-            .create()
-            .also { it.show() }
+        } catch (e: Exception) {
+            // Fallback to AlertDialog if custom layout fails
+            dismissCancelDialog()
+            cancelDialog = android.app.AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(positiveBtn) { _, _ ->
+                    isCancel = true
+                    clearFFmpeg()
+                    toStudio()
+                }
+                .setNegativeButton(negativeBtn) { d, _ ->
+                    d.dismiss()
+                }
+                .setCancelable(false)
+                .create()
+                .also { it.show() }
+            return
+        }
+
+        dialog.show()
+    }
+
+    private fun dismissCancelDialog() {
+        val dialog = cancelDialog
+        if (dialog != null && dialog.isShowing) {
+            dialog.dismiss()
+        }
+        cancelDialog = null
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  Error handling
+    // ════════════════════════════════════════════════════════════════════
+
+    /**
+     * Show error UI when FFmpeg export fails.
+     * Displays an error layout with a "Support Team" button.
+     */
+    private fun showError(session: FFmpegSession) {
+        try {
+            val isArabic = LocaleHelper.getLanguage(this) == "ar"
+            val errorLayout = binding.root.findViewById<LinearLayout>(R.id.layout_error)
+            if (errorLayout != null) {
+                errorLayout.visibility = View.VISIBLE
+            }
+
+            // Try to show error in the error layout
+            val errorText = binding.root.findViewById<android.widget.TextView>(R.id.tv_error)
+            val supportBtn = binding.root.findViewById<android.widget.Button>(R.id.btn_support_team)
+
+            if (isArabic) {
+                supportBtn?.text = "فريق الدعم"
+                errorText?.text = "يوجد مشكلة في هذا التصميم ، لن يتم حفظ هذا الفيديو أخبر فريق الدعم"
+            } else {
+                supportBtn?.text = "Support Team"
+                errorText?.text = "There is a problem with this design, this video won't be saved. Tell the support team."
+            }
+        } catch (e: Exception) {
+            toStudio()
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  AAC encoder check
+    // ════════════════════════════════════════════════════════════════════
+
+    /**
+     * Check if the AAC encoder is available in this FFmpeg build.
+     */
+    @Suppress("unused")
+    fun checkAacEncoder() {
+        try {
+            val tempFile = File.createTempFile("aac_test", ".m4a", cacheDir)
+            tempFile.deleteOnExit()
+            val args = ExportCommandBuilder.buildAacTestArgs(tempFile.absolutePath)
+            FFmpegKit.executeAsync(args.joinToString(" "), FFmpegSessionCompleteCallback { session ->
+                if (ReturnCode.isSuccess(session?.returnCode)) {
+                    android.util.Log.e("AAC", "AAC encoder is available!")
+                } else {
+                    android.util.Log.e("AAC", "AAC encoder NOT supported in this build!")
+                }
+            })
+        } catch (e: Exception) {
+            android.util.Log.e("AAC", "Error checking AAC: ${e.message}")
+        }
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -810,10 +818,7 @@ class ProgressViewActivity : BaseActivity() {
     // ════════════════════════════════════════════════════════════════════
 
     /**
-     * Navigate back to the studio / engine screen with a result code.
-     *
-     * Sets the result to `RESULT_CANCELED` (user cancelled or error)
-     * and finishes the activity.
+     * Navigate back to the engine/studio screen.
      */
     private fun toStudio() {
         if (isDestroy) return
@@ -822,23 +827,44 @@ class ProgressViewActivity : BaseActivity() {
     }
 
     /**
-     * Called when the FFmpeg export completes successfully.
-     * Sets the output URI as a result extra and finishes.
+     * Insert the exported video into the Android Gallery/MediaStore.
      */
-    private fun onExportComplete() {
-        val template = mTemplate ?: run {
-            toStudio()
-            return
+    private fun insertToGallery(uri: Uri) {
+        if (uri.path == null) return
+        try {
+            val file = File(uri.path!!)
+            if (file.exists()) {
+                FileMediaScanner(this, file)
+                sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * Navigate to the VideoViewActivity for sharing/previewing the exported video.
+     */
+    private fun toShare() {
+        val template = mTemplate ?: return
+
+        val intent = Intent(this, VideoViewActivity::class.java)
+
+        val surahTemplate = template.entitySurahTemplate
+        if (surahTemplate != null) {
+            intent.putExtra(Common.SURAH, surahTemplate.name)
+            intent.putExtra(Common.READER, surahTemplate.reader)
+        } else {
+            intent.putExtra(Common.SURAH, "")
+            intent.putExtra(Common.READER, "")
         }
 
-        // The final output video is stored in the template folder
-        val outputUri = mUri ?: template.uri_video ?: template.uri_media_video
-
-        val resultIntent = Intent().apply {
-            putExtra("output_uri", outputUri)
-            putExtra("template_key", template.idTemplate)
-        }
-        setResult(RESULT_OK, resultIntent)
+        intent.putExtra(Common.TEMPLATE, template.idTemplate)
+        intent.data = Uri.parse(template.uri_video)
+        intent.addFlags(0x10000) // FLAG_ACTIVITY_CLEAR_TOP
+        startActivity(intent)
+        @Suppress("DEPRECATION")
+        overridePendingTransition(0, 0)
         finish()
     }
 
@@ -846,12 +872,6 @@ class ProgressViewActivity : BaseActivity() {
     //  RenderManager coordination helpers
     // ════════════════════════════════════════════════════════════════════
 
-    /**
-     * Advance the [RenderManager] to the next step and release the semaphore.
-     *
-     * Called at the end of each pre-render method to signal completion
-     * to [ExportCommandBuilder]'s coordination logic.
-     */
     private fun updateNext(latch: CountDownLatch, semaphore: Semaphore) {
         renderManager.nextTask()
         latch.countDown()
@@ -863,112 +883,88 @@ class ProgressViewActivity : BaseActivity() {
     // ════════════════════════════════════════════════════════════════════
 
     /**
-     * Create a transparent background PNG for FFmpeg overlay operations.
-     *
-     * @param width  Image width in pixels
-     * @param height Image height in pixels
-     * @return The generated [File]
+     * Recursively delete a directory and its contents.
      */
-    @Suppress("SameParameterValue")
-    private fun createTransparentBg(width: Int, height: Int): File {
-        val template = mTemplate ?: return File(cacheDir, "transparent.png")
-        val dir = template.folder_template ?: cacheDir.absolutePath
-        val file = File(dir, "transparent_${width}x${height}.png")
-        if (file.exists()) return file
-
-        val bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
-        val canvas = android.graphics.Canvas(bitmap)
-        canvas.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR)
-
-        java.io.FileOutputStream(file).use { fos ->
-            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, fos)
+    private fun deleteFolder(file: File?) {
+        if (file == null || !file.exists()) return
+        if (file.isDirectory) {
+            val children = file.listFiles()
+            if (children != null) {
+                for (child in children) {
+                    deleteFolder(child)
+                }
+            }
         }
-        return file
+        file.delete()
     }
 
     /**
      * Concatenate multiple video segments into a single output file.
-     *
-     * Uses FFmpeg concat demuxer with a temporary file list.
-     *
-     * @param segments List of segment file paths to concatenate
-     * @return Output file path, or null on failure
      */
+    @Suppress("unused")
     private fun concatVideoSegments(segments: List<String>): String? {
         if (segments.isEmpty()) return null
         if (segments.size == 1) return segments[0]
 
         val template = mTemplate ?: return null
         val dir = template.folder_template ?: return null
-        val outputFile = "$dir/concat_${System.currentTimeMillis()}.mp4"
+        val outputFile = "$dir/final_video.mp4"
 
-        // Write concat list file
-        val concatList = File(dir, "concat_list.txt")
-        concatList.writeText(segments.joinToString("\n") { "file '$it'" })
+        try {
+            val concatList = File(dir, "file_list.txt")
+            concatList.writeText(segments.joinToString("\n") { "file '$it'" })
 
-        val args = arrayOf(
-            "-y",
-            "-f", "concat",
-            "-safe", "0",
-            "-i", concatList.absolutePath,
-            "-c", "copy",
-            "-movflags", "+faststart",
-            outputFile
-        )
+            val args = arrayOf(
+                "-y",
+                "-f", "concat",
+                "-safe", "0",
+                "-i", concatList.absolutePath,
+                "-c", "copy",
+                outputFile
+            )
 
-        val syncLatch = CountDownLatch(1)
-        var success = false
+            FFmpegKit.executeWithArguments(args)
+            concatList.delete()
 
-        val session = FFmpegKit.executeWithArgumentsAsync(args) { completedSession ->
-            success = ReturnCode.isSuccess(completedSession?.returnCode)
-            completedSession?.sessionId?.let { id_ffmpeg.remove(it) }
-            syncLatch.countDown()
+            return if (File(outputFile).exists()) outputFile else null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
         }
-        id_ffmpeg.add(session.sessionId)
+    }
 
-        syncLatch.await()
+    /**
+     * Create a transparent background PNG for FFmpeg overlay operations.
+     */
+    @Suppress("unused")
+    private fun createTransparentBg(width: Int, height: Int): File {
+        val template = mTemplate ?: return File(cacheDir, "transparent.png")
+        val dir = template.folder_template ?: cacheDir.absolutePath
+        val file = File(dir, "transparent_${width}x${height}.png")
+        if (file.exists()) return file
 
-        // Clean up temp list
-        concatList.delete()
-
-        return if (success && File(outputFile).exists()) outputFile else null
+        return ExportCommandBuilder.createTransparentBg(width, height, dir)
     }
 
     // ════════════════════════════════════════════════════════════════════
-    //  Fade / slide helpers — preserved for ExportCommandBuilder interop
+    //  Fade / slide helpers — preserved for backward compatibility
     // ════════════════════════════════════════════════════════════════════
 
-    /**
-     * Build a simple fade filter string.
-     * Delegates to [ExportCommandBuilder.mFadeFilter].
-     */
     @Suppress("unused")
     fun mFadeFilter(startTime: Float, duration: Float, isIn: Boolean): String {
         return ExportCommandBuilder.mFadeFilter(startTime, duration, isIn)
     }
 
-    /**
-     * Build a combined fade-in + fade-out filter string.
-     * Delegates to [ExportCommandBuilder.fadeInOut].
-     */
     @Suppress("unused")
     fun fadeInOut(endTime: Float, fadeInDur: Float, fadeOutDur: Float): String {
         return ExportCommandBuilder.fadeInOut(endTime, fadeInDur, fadeOutDur)
     }
 
-    /**
-     * Build a slide-X expression for FFmpeg overlay positioning.
-     * Delegates to [ExportCommandBuilder.slideX].
-     */
     @Suppress("unused")
     fun slideX(start: Float, duration: Float, offset: Float, scale: Float, from: Float, to: Float): String {
         return ExportCommandBuilder.slideX(start, duration, offset, scale, from, to)
     }
 
-    /**
-     * Build a numeric slide-X expression (unquoted).
-     * Delegates to [ExportCommandBuilder.mSlideX].
-     */
     @Suppress("unused")
     fun mSlideX(start: Float, duration: Float, offset: Float, scale: Float, from: Float, to: Float): String {
         return ExportCommandBuilder.mSlideX(start, duration, offset, scale, from, to)
