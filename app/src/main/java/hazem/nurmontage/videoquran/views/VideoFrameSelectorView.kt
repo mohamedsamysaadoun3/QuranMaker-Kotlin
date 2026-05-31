@@ -3,197 +3,162 @@ package hazem.nurmontage.videoquran.views
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.RectF
 import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import androidx.appcompat.widget.AppCompatImageView
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import androidx.core.internal.view.SupportMenu
 
-/**
- * Custom view that displays a horizontal strip of video frames
- * and allows the user to scrub/seek to select a specific frame.
- *
- * Used by [ChoiceBgFromVideoActivity] to let users pick a video frame
- * as background image.
- *
- * The view draws a series of thumbnail frames from the video and
- * overlays a position indicator that the user can drag.
- */
 class VideoFrameSelectorView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    /** Callback interface for frame seeking events. */
-    interface OnFrameSeekListener {
-        /** Called when the user scrubs to a new position. */
-        fun onSeekTo(timeUs: Long)
+    private var cornerRadius: Float = 10.0f
+    private var cursorPaint: Paint = Paint()
+    private var cursorX: Float = 0.0f
+    private var frameBitmaps: MutableList<BitmapFrame> = ArrayList()
+    private var frameCount: Int = 7
+    private var frameHeight: Float = 0.0f
+    private var framePaint: Paint = Paint()
+    private var frameRect: RectF = RectF()
+    private var frameSpacing: Float = 1.0f
+    private var frameWidth: Float = 0.0f
+    private var onFrameSelectedListener: OnFrameSelectedListener? = null
+    private var selectedFrameIndex: Int = 0
+    private var videoUri: Uri? = null
+
+    interface OnFrameSelectedListener {
+        fun onFrameSelected(value: Int, bitmap: Bitmap)
     }
 
-    private var seekListener: OnFrameSeekListener? = null
-    private var durationUs: Long = 0L
-    private var currentPositionUs: Long = 0L
-
-    private val frameBitmaps = mutableListOf<Bitmap>()
-    private val paintLine = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#FFC30B")
-        strokeWidth = 4f
-    }
-    private val paintBg = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0x66000000
+    private fun init() {
+        framePaint.color = -7829368
+        cursorPaint.color = SupportMenu.CATEGORY_MASK
+        cursorPaint.strokeWidth = 5.0f
+        cursorPaint.style = Paint.Style.STROKE
     }
 
-    private var indicatorX: Float = 0f
-    private var isDragging: Boolean = false
-    private var frameJob: Job? = null
-
-    /** Number of thumbnail frames to extract from the video. */
-    private val THUMBNAIL_COUNT = 10
-
-    fun setOnFrameSeekListener(listener: OnFrameSeekListener) {
-        seekListener = listener
-    }
-
-    /**
-     * Set the total duration of the video in microseconds.
-     * Triggers thumbnail extraction if video path was already set.
-     */
-    fun setDuration(durationUs: Long) {
-        this.durationUs = durationUs
-        requestLayout()
+    fun setVideoUri(uri: Uri?) {
+        this.videoUri = uri
+        loadFrames()
         invalidate()
     }
 
-    /**
-     * Extract thumbnail frames from the given video path.
-     */
-    fun setVideoPath(videoPath: String) {
-        frameJob?.cancel()
-        frameJob = CoroutineScope(Dispatchers.IO).launch {
+    private fun loadFrames() {
+        if (videoUri == null) {
+            return
+        }
+        frameBitmaps.clear()
+        val mediaMetadataRetriever = MediaMetadataRetriever()
+        try {
             try {
-                val retriever = MediaMetadataRetriever()
-                retriever.setDataSource(videoPath)
-
-                val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                val durationMs = durationStr?.toLongOrNull() ?: 0L
-                durationUs = durationMs * 1000L
-
-                val newBitmaps = mutableListOf<Bitmap>()
-                val interval = if (THUMBNAIL_COUNT > 1) durationMs / (THUMBNAIL_COUNT - 1) else 0L
-
-                for (i in 0 until THUMBNAIL_COUNT) {
-                    try {
-                        val timeUs = (i * interval * 1000L).coerceAtMost(durationUs)
-                        retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)?.let {
-                            newBitmaps.add(it)
-                        }
-                    } catch (_: Exception) {
-                        // Skip frames that fail to extract
+                mediaMetadataRetriever.setDataSource(context, videoUri)
+                val parseLong = java.lang.Long.parseLong(mediaMetadataRetriever.extractMetadata(9)) / frameCount
+                for (counter in 0 until frameCount) {
+                    val durationMs = counter * parseLong * 1000
+                    val frameAtTime = mediaMetadataRetriever.getFrameAtTime(durationMs, 2)
+                    if (frameAtTime != null) {
+                        frameBitmaps.add(BitmapFrame(frameAtTime, durationMs))
                     }
                 }
-
-                try {
-                    retriever.release()
-                } catch (_: Exception) {}
-
-                withContext(Dispatchers.Main) {
-                    frameBitmaps.clear()
-                    frameBitmaps.addAll(newBitmaps)
-                    invalidate()
-                }
-            } catch (_: Exception) {
-                // Failed to extract frames
+                mediaMetadataRetriever.release()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                mediaMetadataRetriever.release()
             }
+        } catch (th: Throwable) {
+            try {
+                mediaMetadataRetriever.release()
+            } catch (e2: Exception) {
+                e2.printStackTrace()
+            }
+            throw th
+        } catch (e3: Exception) {
+            e3.printStackTrace()
         }
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        indicatorX = 0f
+        val count = frameCount
+        if (count > 0) {
+            val f = (w * 1.0f) / count
+            frameWidth = f
+            frameHeight = f
+            cursorX = f / 2.0f
+        }
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-
-        val width = width.toFloat()
-        val height = height.toFloat()
-
-        // Draw thumbnail frames
-        if (frameBitmaps.isNotEmpty()) {
-            val frameWidth = width / frameBitmaps.size
-            for (i in frameBitmaps.indices) {
-                val bitmap = frameBitmaps[i]
-                val src = Rect(0, 0, bitmap.width, bitmap.height)
-                val dst = Rect(
-                    (i * frameWidth).toInt(), 0,
-                    ((i + 1) * frameWidth).toInt(), height.toInt()
+        if (frameBitmaps.isEmpty()) {
+            val width = getWidth().toFloat()
+            val height = getHeight().toFloat()
+            val f = cornerRadius
+            canvas.drawRoundRect(0.0f, 0.0f, width, height, f, f, framePaint)
+            return
+        }
+        canvas.save()
+        canvas.translate(0.0f, (getHeight() - frameHeight) * 0.5f)
+        for (index in frameBitmaps.indices) {
+            val widthRatio = frameWidth
+            val f3 = index * (frameSpacing + widthRatio)
+            frameRect.set(f3, 0.0f, widthRatio + f3, frameHeight)
+            val f4 = cornerRadius
+            canvas.drawRoundRect(frameRect, f4, f4, framePaint)
+            val bitmap = frameBitmaps[index].bitmap
+            if (bitmap != null) {
+                canvas.drawBitmap(
+                    bitmap,
+                    Rect(0, 0, bitmap.width, bitmap.height),
+                    frameRect,
+                    null as Paint?
                 )
-                canvas.drawBitmap(bitmap, src, dst, null)
-            }
-        } else {
-            canvas.drawRect(0f, 0f, width, height, paintBg)
-        }
-
-        // Draw indicator line
-        if (durationUs > 0) {
-            indicatorX = (currentPositionUs.toFloat() / durationUs.toFloat()) * width
-        }
-        canvas.drawLine(indicatorX, 0f, indicatorX, height, paintLine)
-
-        // Draw top/bottom border
-        paintLine.strokeWidth = 2f
-        canvas.drawLine(0f, 0f, width, 0f, paintLine)
-        canvas.drawLine(0f, height, width, height, paintLine)
-    }
-
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                isDragging = true
-                updatePosition(event.x)
-                parent.requestDisallowInterceptTouchEvent(true)
-                return true
-            }
-            MotionEvent.ACTION_MOVE -> {
-                if (isDragging) {
-                    updatePosition(event.x)
-                    return true
-                }
-            }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                isDragging = false
-                parent.requestDisallowInterceptTouchEvent(false)
-                return true
             }
         }
-        return super.onTouchEvent(event)
+        canvas.restore()
+        val f5 = cursorX
+        canvas.drawLine(f5, 0.0f, f5, getHeight().toFloat(), cursorPaint)
     }
 
-    private fun updatePosition(x: Float) {
-        val width = width.toFloat()
-        if (width <= 0f) return
-
-        val ratio = (x / width).coerceIn(0f, 1f)
-        currentPositionUs = (ratio * durationUs).toLong()
-        indicatorX = x.coerceIn(0f, width)
-        invalidate()
-
-        seekListener?.onSeekTo(currentPositionUs)
+    override fun onTouchEvent(motionEvent: MotionEvent): Boolean {
+        val action = motionEvent.action
+        if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_MOVE) {
+            val max = Math.max(0.0f, Math.min(motionEvent.x, getWidth().toFloat()))
+            cursorX = max
+            var count = (max / (frameWidth + frameSpacing)).toInt()
+            selectedFrameIndex = count
+            selectedFrameIndex = Math.max(0, Math.min(count, frameCount - 1))
+            invalidate()
+            return true
+        }
+        return super.onTouchEvent(motionEvent)
     }
 
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        frameJob?.cancel()
-        frameBitmaps.forEach { it.recycle() }
-        frameBitmaps.clear()
+    fun getFrameBitmap(): BitmapFrame? {
+        val index = selectedFrameIndex
+        if (index < 0 || index >= frameBitmaps.size) {
+            return null
+        }
+        return frameBitmaps[index]
+    }
+
+    fun setOnFrameSelectedListener(onFrameSelectedListener: OnFrameSelectedListener?) {
+        this.onFrameSelectedListener = onFrameSelectedListener
+    }
+
+    init {
+        init()
+    }
+
+    inner class BitmapFrame(private val bitmap: Bitmap, private val time: Long) {
+        fun getBitmap(): Bitmap = bitmap
+        fun getTime(): Long = time
     }
 }

@@ -123,9 +123,9 @@ class BlurredImageView @JvmOverloads constructor(
     internal var clr_trsl: Int = 0
     internal var color_bg_type_classic: Int = 0
     internal var color_gradient: Gradient? = null
-    internal var color_ipad: Int = 0
+    internal var color_ipad: Int = -1
     internal var color_line_bg: Int = 0
-    internal var currentTime: String? = null
+    internal var currentTime: String = "0:00"
     var darkShadowPaint: Paint = Paint()
         private set
     internal var entity_select: EntityView? = null
@@ -154,7 +154,7 @@ class BlurredImageView @JvmOverloads constructor(
     internal var mCanvas_width: Int = 0
     internal var mDrawingTranslationX: Float = 0f
     internal var mDrawingTranslationY: Float = 0f
-    internal var mIpadType: Int = 0
+    internal var mIpadType: Int = IpadType.IPAD.ordinal
     internal var mIsti3adhaEntity: BismilahEntity? = null
     internal var mRectWattermark: RectF? = null
     internal var mResizetype: Int = 0
@@ -166,7 +166,7 @@ class BlurredImageView @JvmOverloads constructor(
     internal var paintLecture: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
     internal var paintText: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
     internal var paintWattermark: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    internal var prevDistance: Float = 0f
+    internal var prevDistance: Float = -1.0f
     internal var progress: Float = 0f
     private val quranEntities: MutableList<QuranEntity> = ArrayList()
     internal var radius_cursur: Float = 0f
@@ -176,19 +176,19 @@ class BlurredImageView @JvmOverloads constructor(
     internal var rectFProgress: RectF? = null
     internal var rectFSurahName: RectF? = null
     internal var rectSquare: Rect? = null
-    internal var remainingTime: String? = null
+    internal var remainingTime: String = "0:15"
     internal var scaleGestureDetector: ScaleGestureDetector? = null
     internal var scheme: ColorSchemeGenerator.Scheme? = null
     internal var selectTool: EntitySelectTool? = null
     internal var showCenterLineX: Boolean = false
     internal var showCenterLineY: Boolean = false
-    internal var startTime: Long = 0L
+    internal var startTime: Long = -1L
     var surahNameEntity: SurahNameEntity? = null
     internal var top_square: Float = 0f
     private val translationEntities: MutableList<TranslationQuranEntity> = ArrayList()
     internal var txt_y: Float = 0f
-    internal var wmAlpha: Float = 0f
-    internal var wmScale: Float = 0f
+    internal var wmAlpha: Float = 1.0f
+    internal var wmScale: Float = 1.0f
     internal var wmTranslateY: Float = 0f
 
     // ═══════════════════════════════════════════════════════════════════
@@ -198,26 +198,60 @@ class BlurredImageView @JvmOverloads constructor(
     private val gestureListener: GestureDetector.SimpleOnGestureListener =
         object : GestureDetector.SimpleOnGestureListener() {
             override fun onDown(e: MotionEvent): Boolean {
+                if (!isPro && mRectWattermark != null && mRectWattermark!!.contains(e.x, e.y)) {
+                    isWattermark = true
+                }
+                if (entity_select != null && entity_select!!.isVisible() && !isWattermark) {
+                    if (selectTool!!.isApply(entity_select, e.x, e.y)) {
+                        if (selectTool!!.isApply_Move()) {
+                            iViewCallback!!.onEndMove()
+                        }
+                        if (selectTool!!.isApply_Scale()) {
+                            iViewCallback!!.onEndScale()
+                        }
+                        selectTool!!.setClick_apply(true)
+                        selectTool!!.reset()
+                    } else {
+                        selectTool!!.isScale(entity_select, e.x, e.y)
+                    }
+                    if (selectTool!!.isApply_Scale()) {
+                        selectTool!!.setOnProgress(true)
+                        prevDistance = distanceToCenter(e.x, e.y)
+                    }
+                }
                 return true
             }
 
             override fun onSingleTapUp(e: MotionEvent): Boolean {
-                updateSelectionOnTap(e.x, e.y)
-                return super.onSingleTapUp(e)
-            }
-
-            override fun onDoubleTap(e: MotionEvent): Boolean {
-                if (entity_select != null) {
-                    iViewCallback?.onSquare()
-                }
-                return super.onDoubleTap(e)
-            }
-
-            override fun onLongPress(e: MotionEvent) {
-                if (entity_select != null && selectTool != null) {
-                    selectTool!!.setApply_all(true)
+                if (entity_select != null && selectTool!!.isClick_apply()) {
+                    selectTool!!.setClick_apply(false)
                     invalidate()
+                    return true
                 }
+                if (!isWattermark) {
+                    updateSelectionOnTap(e.x, e.y)
+                }
+                isOnScale = false
+                if (iViewCallback != null) {
+                    if (entity_select == null) {
+                        if (isWattermark) {
+                            iViewCallback!!.onWattermark()
+                        } else if (isSquare) {
+                            iViewCallback!!.onSquare()
+                        } else {
+                            iViewCallback!!.onEmtyClick()
+                        }
+                    } else if (selectTool != null && selectTool!!.isApply_Move() &&
+                        ((entity_select is QuranEntity) || (entity_select is TranslationQuranEntity)) &&
+                        !selectTool!!.isApply_all()
+                    ) {
+                        selectTool!!.setApply_all(true)
+                        invalidate()
+                    }
+                    isWattermark = false
+                    isSquare = false
+                }
+                return super.onSingleTapUp(e)
             }
         }
 
@@ -2053,8 +2087,15 @@ class BlurredImageView @JvmOverloads constructor(
         invalidate()
     }
 
-    fun updateAlignmentSurah(alignment: Layout.Alignment) {
-        surahNameEntity?.setAlignment(alignment)
+    fun updateAlignmentSurah(textValue: String): Layout.Alignment {
+        if (mIpadType == IpadType.IPAD_NEOMORPHIC.ordinal || mIpadType == IpadType.CASSET.ordinal || mIpadType == IpadType.CASSET_IMG.ordinal || mIpadType == IpadType.CASSET_IMG_BLUR.ordinal) {
+            return Layout.Alignment.ALIGN_CENTER
+        }
+        return if (!Utils.isProbablyLArabic(textValue)) {
+            Layout.Alignment.ALIGN_NORMAL
+        } else {
+            Layout.Alignment.ALIGN_OPPOSITE
+        }
     }
 
 

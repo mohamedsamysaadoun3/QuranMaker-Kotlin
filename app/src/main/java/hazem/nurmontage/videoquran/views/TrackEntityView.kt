@@ -547,8 +547,8 @@ class TrackEntityView @JvmOverloads constructor(
                             return@Runnable
                         }
                     }
-                    if (etl.index + 1 < entityListQuran.size) {
-                        val next = getPreviewOrNextEntityQuran(entityListQuran, etl.index + 1, true)
+                    if (etl.index + 1 < entityListTrslQuran.size) {
+                        val next = getPreviewOrNextEntityTrslQuran(entityListTrslQuran, etl.index + 1, true)
                         if (next != null && f3 >= next.rect.left) {
                             selectedEntity!!.setX(next.rect.left - width)
                             selectedEntity!!.right = next.rect.left

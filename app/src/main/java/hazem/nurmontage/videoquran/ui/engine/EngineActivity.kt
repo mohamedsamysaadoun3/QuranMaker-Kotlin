@@ -482,7 +482,7 @@ class EngineActivity : BaseActivity() {
         override fun onEmptySelect() {
             blurredImageView.entity_select = null
             blurredImageView.postInvalidate()
-            stop()
+            pausePlayer()
             hideFragment()
         }
 
@@ -542,11 +542,11 @@ class EngineActivity : BaseActivity() {
         }
 
         override fun pause() {
-            stop()
+            pausePlayer()
         }
 
         override fun onPlayVibration() {
-            stop()
+            pausePlayer()
             runOnUiThread {
                 if (vibrationHelper != null) {
                     vibrationHelper!!.vibrate()
@@ -804,8 +804,7 @@ class EngineActivity : BaseActivity() {
         }
         blurredImageView.surahNameEntity!!.clrBg = data.getIntExtra("clrBg", ViewCompat.MEASURED_STATE_MASK)
         if (intExtra == SurahNameStyle.NONE.ordinal) {
-            blurredImageView.surahNameEntity!!.setAlignment(android.text.Layout.Alignment.ALIGN_CENTER)
-                    blurredImageView.updateAlignmentSurah(android.text.Layout.Alignment.ALIGN_CENTER)
+            blurredImageView.surahNameEntity!!.setAlignment(blurredImageView.updateAlignmentSurah(stringExtra))
         }
         blurredImageView.surahNameEntity!!.setStyle(this@EngineActivity, intExtra, stringExtra, booleanExtra)
         blurredImageView.invalidate()
@@ -2621,7 +2620,7 @@ private fun initResolution() {
             layout_resolution?.visibility = View.GONE
         }
     }
-    seekBar_fps = findViewById(R.id.seekBar_fps)
+    seekBar_fps = findViewById(R.id.seekbar_fps)
     when (mTemplate!!.fps) {
         15 -> seekBar_fps.setProgress(0)
         25 -> seekBar_fps.setProgress(1)
@@ -2639,7 +2638,7 @@ private fun initResolution() {
         }
     })
     tv_resolution.text = mTemplate!!.resolution
-    seekBar_res = findViewById(R.id.seekBar_res)
+    seekBar_res = findViewById(R.id.seekbar_resolution)
     when (mTemplate!!.resolution) {
         "480p" -> seekBar_res.setProgress(0)
         "720p" -> seekBar_res.setProgress(1)
@@ -2830,7 +2829,7 @@ private fun initViews() {
     }
     val imageButton4 = findViewById<ImageButton>(R.id.btn_cancel)
     btn_cancel = imageButton4
-    imageButton4.setOnClickListener { dialog?.dismiss() }
+    imageButton4.setOnClickListener { showExitDialog() }
     tv_tittle_fragment = findViewById(R.id.tv_tittle_fragment)
     (findViewById<TextCustumFont>(R.id.tv_quran)).text = mResources!!.getString(R.string.quran)
     (findViewById<TextCustumFont>(R.id.tv_bg)).text = mResources!!.getString(R.string.bg)
@@ -7421,6 +7420,11 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
         try {
             if (::btnToStart.isInitialized) {
                 btnToStart.isEnabled = trackViewEntity.current_cursur_position > 0
+                if (btnToStart.isEnabled) {
+                    btnToStart.setColorFilter(-1, PorterDuff.Mode.SRC_IN)
+                } else {
+                    btnToStart.setColorFilter(-8355712, PorterDuff.Mode.SRC_IN)
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -7431,6 +7435,11 @@ fun applyffect(str: String, entityAudio: EntityAudio) {
         try {
             if (::btnToEnd.isInitialized) {
                 btnToEnd.isEnabled = trackViewEntity.current_cursur_position < trackViewEntity.maxTime
+                if (btnToEnd.isEnabled) {
+                    btnToEnd.setColorFilter(-1, PorterDuff.Mode.SRC_IN)
+                } else {
+                    btnToEnd.setColorFilter(-8355712, PorterDuff.Mode.SRC_IN)
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
